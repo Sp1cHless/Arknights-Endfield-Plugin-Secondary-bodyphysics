@@ -257,18 +257,19 @@ public:
     float dominantWeight = -1.0f;
     int bestGait = GaitNone;
     GaitClipSelection bestClip;
+    GaitTimingSample timingSample;
     bool transToIdle = false;
     bool landing = false;
     bool jumpStart = false;
     bool attackActive = false;
     bool ziplineActive = false;
-    bool bestLoopStable = false;
     char bestClipName[128] = {0};
     StopReleaseSample releaseSample;
     active.jumpDetected = false;  // recomputed every sample
     for (size_t i = 0; i < count; i++) {
       GaitClassification cls =
           ClassifyClipNameFull(clips[i].name, active.profile);
+      timingSample.Observe(cls);
       releaseSample.Observe(clips[i].name, cls, clips[i].weight);
       const float clipRank = SafeClipBlendWeight(clips[i].weight);
       if (clipRank > dominantWeight) {
@@ -282,7 +283,6 @@ public:
                  clips[i].name[0] ? clips[i].name : "<unnamed>");
       if (bestClip.Observe(cls, clips[i].weight)) {
         bestGait = cls.gait;
-        bestLoopStable = cls.loopStable;
         snprintf(bestClipName, sizeof(bestClipName), "%s", clips[i].name);
       }
       if (cls.transitionToIdle) transToIdle = true;
@@ -313,22 +313,26 @@ public:
     if (frequencyEligible)
       FreqLockPrepare(active.synthetic.freq, GaitParamRef(*active.profile, bestGait),
                       bestGait, freqCache_, active.characterId);
-    const bool trackEligible = bestLoopStable && frequencyEligible;
+    const bool trackEligible = frequencyEligible &&
+        !readStatus.truncated && readStatus.reportedCount >= 0 &&
+        readStatus.parsedCount == static_cast<size_t>(readStatus.reportedCount) &&
+        timingSample.CanTrack(bestGait);
     active.synthetic.phaseRefValid = false;
     if (trackEligible) {
       float norm = reader_.ReadNormalizedTime(callerAnimator);
       if (std::isfinite(norm) && norm >= 0.0f) {
         // auto-frequency alignment runs regardless of the phase-align switch
         const GaitParam &gp = GaitParamRef(*active.profile, bestGait);
-        FreqLockTick(active.synthetic.freq, gp, bestClipName, norm, now,
-                     bestGait, freqCache_, active.characterId);
+        const bool usableTiming = FreqLockTick(
+            active.synthetic.freq, gp, bestClipName, norm, now,
+            bestGait, freqCache_, active.characterId);
         static DWORD s_freqLogT = 0;
         if (RateLimit(s_freqLogT, 2000) && active.synthetic.freq.measValid)
           ProbeLog("[FREQ] gait=%d cfg=%.2f meas=%.2f use=%.2f%s\n",
                    bestGait, gp.frequencyHz, active.synthetic.freq.measHz,
                    active.synthetic.freq.useHz,
                    active.synthetic.freq.correcting ? " (correcting)" : "");
-        if (GaitPhaseAlignEnabled(*active.profile, bestGait)) {
+        if (usableTiming && GaitPhaseAlignEnabled(*active.profile, bestGait)) {
           active.synthetic.phaseRefRad = ApplyGaitPhaseOffset(
               PhaseFromNormalizedTime(norm, kLocomotionPhaseCyclesPerLoop),
               GaitPhaseOffsetDeg(*active.profile, bestGait));

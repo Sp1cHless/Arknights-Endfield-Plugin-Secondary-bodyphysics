@@ -432,7 +432,7 @@ static void TestEnvelope() {
   CHECK("residual energy cannot start a tail without a verified stop",
         !ReleaseTailActive(false, false, 0.1f, 0.1f));
   // User-scale to-idle tau (0.3s): the decay must be GRADUAL (still most of
-  // the amplitude shortly after the stop) and must eventually settle below
+  // the amplitude shortly after the stop) and must eventually settle at
   // zero — the engine keeps writing this bounded decay instead
   // of truncating it mid-swing.
   LocomotionEnvelope tail;
@@ -460,12 +460,14 @@ static void TestEnvelope() {
           release.freqEnv = hz;
           double elapsed = 0.0;
           float previous = startAmp;
-          int frames = (int)ceil(2.0 * tau / dt) + 1;
+          int frames = (int)ceil(kStopReleaseDurationInTau * tau / dt) + 1;
           for (int i = 0; i < frames; i++) {
             release.AdvanceDt(dt, 0, 0, hz, true, .15f, tau, .2f);
             elapsed += dt;
-            double remaining = fmax(0.0, 1.0 - elapsed / (2.0 * tau));
-            float expected = (float)(startAmp * remaining * remaining);
+            double handoff = log(2.0) * tau;
+            double remaining = fmax(0.0, 1.0 - (elapsed - handoff) / (2.0 * tau));
+            float expected = (float)(startAmp * (elapsed <= handoff ?
+                exp(-elapsed / tau) : .5 * remaining * remaining));
             releaseShape &= Near(release.ampEnv, expected, 1e-7f) &&
                             Near(release.downEnv, expected * .4f, 1e-7f) &&
                             release.ampEnv <= previous;
@@ -477,9 +479,67 @@ static void TestEnvelope() {
       }
     }
   }
-  CHECK("finite stop release follows quadratic curve across amplitudes and frame rates", releaseShape);
-  CHECK("all stop releases reach exact zero within two tau plus one frame", finiteReleases);
+  CHECK("finite stop release follows joined curve across amplitudes and frame rates", releaseShape);
+  CHECK("all stop releases reach exact zero within ln2 plus two tau and one frame", finiteReleases);
   CHECK("finite stop release preserves cadence", releaseFrequency);
+  bool onsetUnchanged = true, handoffSmooth = true, endpointSmooth = true;
+  bool lastFrameSmall = true;
+  for (float tau : {.015f, .2f, .5f, .7f, 1.0f, 3.0f}) {
+    double join = log(2.0) * tau;
+    double end = (log(2.0) + 2.0) * tau;
+    double epsilon = 1e-4 * tau;
+    for (double fraction : {0.0, .1, .3, .6})
+      onsetUnchanged &= Near(StopReleaseGain(fraction * tau, tau), (float)exp(-fraction), 1e-7f);
+    double leftSlope = (StopReleaseGain(join, tau) - StopReleaseGain(join-epsilon, tau)) / epsilon;
+    double rightSlope = (StopReleaseGain(join+epsilon, tau) - StopReleaseGain(join, tau)) / epsilon;
+    handoffSmooth &= Near(StopReleaseGain(join, tau), .5f, 1e-7f) &&
+                     fabs(leftSlope + .5/tau) < .002/tau &&
+                     fabs(rightSlope + .5/tau) < .002/tau;
+    for (double hz : {1.2, 1.85, 3.6}) {
+      for (double phase : {0.0, 1.0, 2.5, 4.7}) {
+        auto angle = [&](double time) {
+          return StopReleaseGain(time, tau) * sin(phase + 6.28318530717959 * hz * time);
+        };
+        endpointSmooth &= angle(end) == 0 && angle(end+epsilon) == 0 &&
+                          fabs((angle(end)-angle(end-epsilon))/epsilon) < .001/tau;
+      }
+    }
+    // When the finite endpoint is crossed, the last contribution is already
+    // bounded quadratically by dt^2/(8*tau^2), even at 20fps.
+    if (tau >= .2f) {
+      for (double dt : {1.0/20, 1.0/30, 1.0/60, 1.0/144})
+        lastFrameSmall &= StopReleaseGain(end-dt, tau) <= dt*dt/(8*tau*tau) + 1e-7 &&
+                          StopReleaseGain(end-dt, tau) < .008;
+    }
+  }
+  CHECK("stop onset is unchanged until half amplitude", onsetUnchanged);
+  CHECK("exponential to finite tail handoff preserves amplitude and slope", handoffSmooth);
+  CHECK("stop angle and angular velocity approach zero for different cadences and phases", endpointSmooth);
+  CHECK("last frame is below 0.8 percent at supported preset tau even at 20fps", lastFrameSmall);
+  // One stop epoch crosses stop->idle without renewing duration or amplitude.
+  StopReleaseState acceptedStop;
+  StopReleaseSample stopSample, idleSample;
+  stopSample.Observe("run_stop", ClassifyClipNameFull("run_stop"), 0);
+  idleSample.Observe("idle_loop", ClassifyClipNameFull("idle_loop"), 0);
+  acceptedStop.Observe(stopSample);
+  LocomotionEnvelope intoIdle;
+  intoIdle.ampEnv = .2f;
+  intoIdle.downEnv = .3f;
+  intoIdle.freqEnv = 3.0f;
+  bool completedInIdle = true;
+  for (int i = 0; i < 180; i++) {
+    bool inStop = i < 30;
+    acceptedStop.Observe(inStop ? stopSample : idleSample);
+    bool tailAllowed = ReleaseTailActive(acceptedStop.armed, inStop,
+                                         intoIdle.ampEnv, intoIdle.downEnv);
+    bool release = inStop || tailAllowed;
+    float previous = intoIdle.ampEnv;
+    intoIdle.AdvanceDt(1.0f/60, 0, 0, 3.0f, release, .15f, 1.0f, .2f);
+    completedInIdle &= intoIdle.ampEnv <= previous;
+    if (!inStop && previous > 0) completedInIdle &= tailAllowed;
+  }
+  CHECK("accepted stop continues through idle to finite zero without restarting",
+        completedInIdle && intoIdle.ampEnv == 0 && intoIdle.downEnv == 0);
   LocomotionEnvelope restartRelease;
   restartRelease.ampEnv = .2f;
   restartRelease.downEnv = .1f;
@@ -492,7 +552,7 @@ static void TestEnvelope() {
   float newStart = restartRelease.ampEnv;
   restartRelease.AdvanceDt(.05f, 0, 0, 2, true, .15f, 1, .2f);
   CHECK("next stop captures current amplitude and starts a fresh release",
-        Near(restartRelease.ampEnv, newStart * .975f * .975f));
+        Near(restartRelease.ampEnv, newStart * expf(-.05f)));
   restartRelease.Reset();
   CHECK("runtime reset clears finite stop state",
         !restartRelease.stopReleasing && restartRelease.releaseElapsedSec == 0);
@@ -519,6 +579,39 @@ static void TestEnvelope() {
   pllRate.SetPhaseTracking(false, 0.0);
   CHECK("tracking disengage clears the rate correction",
         pllRate.phaseCorrHz == 0.0);
+  // Rate limits are common to all gaits and remain effective with the
+  // real 20Hz held phase reference at several render frame rates.
+  bool commonRateBounds = true, phaseSwitchOff = true;
+  for (float initialHz : {1.2f, 1.85f, 3.6f}) {
+    for (float targetHz : {1.2f, 1.85f, 3.6f}) {
+      for (float dt : {1.0f/20, 1.0f/30, 1.0f/60, 1.0f/144}) {
+        LocomotionEnvelope tracked;
+        tracked.freqEnv = initialHz;
+        tracked.SetPhase(2.5);
+        double time = 0, sampleTime = -1, heldRef = 0;
+        for (int frame = 0; frame < (int)(4/dt); frame++) {
+          time += dt;
+          if (time-sampleTime >= .05) {
+            sampleTime = time;
+            heldRef = fmod(6.28318530717959 * targetHz * time, 6.28318530717959);
+          }
+          tracked.SetPhaseTracking(true, heldRef);
+          double previous = tracked.phase;
+          tracked.AdvanceDt(dt, .1f, .1f, targetHz, false, .15f, 1, 1);
+          double effective = WrapPhaseError(previous, tracked.phase) / (6.28318530717959 * dt);
+          double bound = fmin(kPhaseCorrMaxHz, tracked.freqEnv * kPhaseCorrMaxFraction);
+          commonRateBounds &= fabs(effective-tracked.freqEnv) <= bound + 1e-6;
+        }
+        tracked.SetPhaseTracking(false, 0);
+        double previous = tracked.phase;
+        tracked.AdvanceDt(dt, .1f, .1f, targetHz, false, .15f, 1, 1);
+        phaseSwitchOff &= fabs(WrapPhaseError(previous, tracked.phase) /
+            (6.28318530717959 * dt) - tracked.freqEnv) < 1e-6;
+      }
+    }
+  }
+  CHECK("all gait rates obey combined PLL bounds at 20Hz phase sampling", commonRateBounds);
+  CHECK("phase align off leaves pure configured frequency integration", phaseSwitchOff);
   // GaitDownAmplitude fallback semantics (0 = symmetric = up); inlined here
   // because synthetic_motion.h pulls IL2CPP deps that verify cannot link.
   CharacterProfile p0;
@@ -1486,6 +1579,108 @@ static void TestFreqLock() {
   const char *clip = "run_loop";
   GaitParam gp;  // defaults: freq 1.0, autoFrequency on, threshold 0.05
   gp.frequencyHz = 2.0f;
+
+  const char *loops[] = {"walk_loop", "run_loop", "sprint_loop", "interact_zipline_sp_02"};
+  const char *nonLoops[] = {"walk_start", "run_to_walk", "sprint_pivot_r",
+      "run_bump", "interact_zipline_start", "idle_loop", "attack", "unknown_pose",
+      "idle_jump_start_l", "run_stop"};
+  for (int gait = GaitWalk; gait <= GaitZipline; gait++) {
+    GaitTimingSample stable;
+    stable.Observe(ClassifyClipNameFull(loops[gait - GaitWalk]));
+    CHECK("each stable locomotion gait can publish timing", stable.CanTrack(gait));
+    stable.Observe(ClassifyClipNameFull(loops[gait - GaitWalk]));
+    CHECK("same-gait loop blends keep shared state timing", stable.CanTrack(gait));
+    bool nonLoopsBlocked = true, foreignLoopsBlocked = true;
+    for (const char *name : nonLoops) {
+      GaitTimingSample blended = stable;
+      blended.Observe(ClassifyClipNameFull(name));
+      nonLoopsBlocked &= !blended.CanTrack(gait);
+    }
+    for (int other = GaitWalk; other <= GaitZipline; other++) {
+      if (other == gait) continue;
+      GaitTimingSample blended = stable;
+      blended.Observe(ClassifyClipNameFull(loops[other - GaitWalk]));
+      foreignLoopsBlocked &= !blended.CanTrack(gait);
+    }
+    CHECK("all gaits reject transition jump idle and unknown timing blends", nonLoopsBlocked);
+    CHECK("all gaits reject timing from mixed gait loops", foreignLoopsBlocked);
+  }
+  CHECK("empty clip samples cannot publish timing", !GaitTimingSample().CanTrack(GaitRun));
+
+  // All ordered gait pairs, including same configured Hz: cache ownership
+  // is gait-specific, not a Walk exception or a frequency comparison.
+  for (bool equalConfig : {false, true}) {
+    for (bool fittedDestination : {false, true}) {
+      bool targetsOwned = true, onsetOwned = true, cacheSurvives = true;
+      bool switchesHonored = true, measurementConverges = true;
+      for (int source = GaitWalk; source <= GaitZipline; source++) {
+        for (int destination = GaitWalk; destination <= GaitZipline; destination++) {
+          FreqCache cache;
+          GaitParam from = gp, to = gp;
+          from.frequencyHz = equalConfig ? 2.0f : 1.0f + source;
+          to.frequencyHz = equalConfig ? 2.0f : 1.0f + destination;
+          float fitFrom = from.frequencyHz * .9f;
+          float fitTo = to.frequencyHz * .9f;
+          cache.Put("chr_matrix", source, fitFrom, from.frequencyHz);
+          if (fittedDestination)
+            cache.Put("chr_matrix", destination, fitTo, to.frequencyHz);
+          else if (source == destination)
+            cache.Invalidate("chr_matrix", destination);
+          FreqLockState state;
+          FreqLockPrepare(state, from, source, cache, "chr_matrix");
+          float expected = fittedDestination || source != destination ? fitFrom : from.frequencyHz;
+          cacheSurvives &= Near(state.useHz, expected);
+          float beforeSample = FreqLockTargetHz(state, to, destination);
+          targetsOwned &= Near(beforeSample, source == destination ? state.useHz : to.frequencyHz);
+          FreqLockPrepare(state, to, destination, cache, "chr_matrix");
+          expected = fittedDestination ? fitTo : to.frequencyHz;
+          onsetOwned &= Near(FreqLockTargetHz(state, to, destination), expected);
+          FreqLockPause(state);  // start/transition clip cannot measure
+          onsetOwned &= Near(FreqLockTargetHz(state, to, destination), expected) && !state.measValid;
+          GaitParam manual = to;
+          manual.autoFrequency = false;
+          switchesHonored &= Near(FreqLockTargetHz(state, manual, destination), to.frequencyHz);
+          for (int sample = 0; sample < 45; sample++) {
+            float norm = fmodf(sample * .05f * fitTo / 2.0f, 1.0f);
+            FreqLockTick(state, to, "stable_loop", norm, 1000 + sample * 50,
+                         destination, cache, "chr_matrix");
+          }
+          measurementConverges &= state.measValid && Near(state.measHz, fitTo, .001f) &&
+                                 fabsf(state.useHz - fitTo) / fitTo < .0251f;
+        }
+      }
+      printf("  matrix: equal_config=%d fitted_destination=%d (16 gait pairs)\n",
+             equalConfig, fittedDestination);
+      CHECK("every gait target rejects a foreign gait fit", targetsOwned);
+      CHECK("every gait start uses its own cache or configuration", onsetOwned);
+      CHECK("gait matrix preserves available source cache", cacheSurvives);
+      CHECK("every gait honors manual frequency override", switchesHonored);
+      CHECK("every gait converges on its own loop measurement", measurementConverges);
+    }
+  }
+  // A stalled/discontinuous clock must not keep correcting from stale EMA.
+  for (int failure = 0; failure < 4; failure++) {
+    FreqCache cache;
+    FreqLockState state;
+    for (int i = 0; i < 6; i++)
+      FreqLockTick(state, gp, "run_loop", .06f * i, 1000 + 50 * i,
+                   GaitRun, cache, "chr_test");
+    float before = state.useHz;
+    float norm = failure == 0 ? .30f : failure == 1 ? .90f :
+                 failure == 2 ? std::numeric_limits<float>::quiet_NaN() : .40f;
+    DWORD time = failure == 3 ? 2250 : 1300;
+    bool phaseUsable = FreqLockTick(state, gp, "run_loop", norm, time, GaitRun, cache, "chr_test");
+    CHECK("stalled invalid implausible or undersampled timing cannot advance a fit",
+          !phaseUsable && !state.measValid && !state.correcting && state.devCount == 0 &&
+          Near(state.useHz, before) && !cache.Find("chr_test", GaitRun));
+    if (failure == 0) {
+      bool remainsInvalid = true;
+      for (int i = 1; i <= 6; i++)
+        remainsInvalid &= !FreqLockTick(state, gp, "run_loop", norm, time + 50*i,
+                                        GaitRun, cache, "chr_test");
+      CHECK("persistent stalled clock never rearms a stale phase reference", remainsInvalid);
+    }
+  }
 
   // Regression: start clips previously borrowed the last gait's fitted Hz.
   {

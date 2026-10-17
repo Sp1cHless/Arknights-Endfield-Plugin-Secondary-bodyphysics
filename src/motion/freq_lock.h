@@ -16,6 +16,8 @@ static constexpr float kFreqEmaAlpha = 0.3f;         // measurement EMA
 static constexpr float kFreqCorrectionStep = 0.2f;   // per-sample pull toward meas
 static constexpr int   kFreqDevSamples = 5;          // samples before correction (~0.25s)
 static constexpr float kFreqMeasMaxDeltaNorm = 0.5f; // reject > half-loop per 50ms
+static constexpr float kFreqMeasMinDeltaNorm = 1e-6f; // reject stalled/roundoff deltas
+static constexpr float kFreqMeasMaxGapSec = 0.25f;  // do not fit across stalls
 static constexpr double kFreqLockCyclesPerLoop = 2.0;  // 1:2 loop->oscillator mapping
 static constexpr int   kFreqCacheMax = 32;           // fitted-frequency cache slots
 
@@ -138,13 +140,18 @@ static inline float FreqLockTargetHz(const FreqLockState &f,
 // One 20Hz sample.  `g` is the per-gait GaitParam of the current clip;
 // `clipName` change restarts measurement; `cache` holds the learned
 // (characterId, gait) frequencies so switches reuse them instead of falling
-// back to the config value.
-static inline void FreqLockTick(FreqLockState &f, const GaitParam &g,
+// back to the config value. Returns whether this sample can publish a phase
+// reference too; an invalid timing interval must disable both consumers.
+static inline bool FreqLockTick(FreqLockState &f, const GaitParam &g,
                                 const char *clipName, float norm, DWORD now,
                                 int gait, FreqCache &cache,
                                 const char *charId) {
   const float cfgHz = g.frequencyHz;
   FreqLockPrepare(f, g, gait, cache, charId);
+  if (!std::isfinite(norm) || norm < 0.0f) {
+    FreqLockPause(f);
+    return false;
+  }
 
   // A different clip or a paused measurement needs a fresh first sample.
   // The cache validates its own config identity, including after hot reload.
@@ -158,16 +165,32 @@ static inline void FreqLockTick(FreqLockState &f, const GaitParam &g,
     f.measValid = false;
     f.correcting = false;
     f.devCount = 0;
-    return;  // first sample of a clip: no delta yet
+    return true;  // finite phase is usable; no frequency delta yet
   }
 
   // measurement: loop frequency from the normalizedTime delta (already
   // includes state-speed multipliers that Animator.speed misses)
-  if (norm >= 0.0f && f.havePrev && f.lastNormMs) {
+  if (f.havePrev && f.lastNormMs) {
     float dNorm = norm - f.lastNorm;
     if (dNorm < 0.0f) dNorm += 1.0f;  // wrapped a full loop
     float dt = (float)(now - f.lastNormMs) / 1000.0f;
-    if (dt > 0.01f && dNorm > 0.0f && dNorm < kFreqMeasMaxDeltaNorm) {
+    if (dt <= 0.01f || dt > kFreqMeasMaxGapSec ||
+        dNorm <= kFreqMeasMinDeltaNorm || dNorm >= kFreqMeasMaxDeltaNorm) {
+      // A previous good measurement does not make this sample usable.
+      // Break the consecutive-deviation streak and never advance a fit
+      // using stale EMA during a frozen/restarted/undersampled clock.
+      f.measValid = false;
+      f.correcting = false;
+      f.devCount = 0;
+      // Retain this clip and rebase to the current finite clock sample.
+      // A persistent stall must remain invalid on every following sample,
+      // rather than repeatedly masquerading as a fresh clip engagement.
+      f.havePrev = true;
+      f.lastNorm = norm;
+      f.lastNormMs = now;
+      return false;
+    }
+    {
       const float fMeas =
           (float)(kFreqLockCyclesPerLoop * (dNorm / dt));
       if (!f.measValid) {
@@ -185,7 +208,7 @@ static inline void FreqLockTick(FreqLockState &f, const GaitParam &g,
   // deviation-triggered correction (hysteresis: trigger at the threshold,
   // keep correcting through the band until the deviation drops below
   // threshold/2, then freeze)
-  if (!g.autoFrequency || !f.measValid || f.measHz < 0.1f) return;
+  if (!g.autoFrequency || !f.measValid || f.measHz < 0.1f) return true;
   const float th = g.freqDevThreshold;
   const float dev = fabsf(f.useHz - f.measHz) / f.measHz;
   if (dev > th) {
@@ -205,4 +228,5 @@ static inline void FreqLockTick(FreqLockState &f, const GaitParam &g,
       cache.Put(charId, gait, f.useHz, cfgHz);  // persist fit and config identity
     }
   }
+  return true;
 }

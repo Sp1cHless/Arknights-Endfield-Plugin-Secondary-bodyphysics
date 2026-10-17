@@ -440,7 +440,8 @@ freq_lock = text("src/motion/freq_lock.h")
 require("FreqLockTick" in freq_lock and "kFreqDevSamples" in freq_lock and
         "kFreqCorrectionStep" in freq_lock and "kFreqEmaAlpha" in freq_lock,
         "freq_lock.h missing the frequency lock primitives")
-require("FreqLockTick(active.synthetic.freq" in gait_sampler,
+require("FreqLockTick(" in gait_sampler and
+        "active.synthetic.freq, gp, bestClipName, norm, now" in gait_sampler,
         "gait sampler must feed the 20Hz sample into the frequency lock")
 require("GaitPhaseAlignEnabled" in gait_sampler and
         "active.synthetic.phaseRefValid = false" in gait_sampler,

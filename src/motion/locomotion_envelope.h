@@ -2,7 +2,7 @@
 // motion/locomotion_envelope.h — amplitude/frequency envelope with phase
 // integration (baseline review #11 semantics, user-confirmed "效果非常好"):
 //   desiredAngle(t) = ampEnv(t) * sin(phase(t))
-//   amp env: exponential attack, finite quadratic stop release (2 x tau)
+//   amp env: exponential attack, exponential stop onset + finite release tail
 //   freq env: exponential approach, tau 0.20s
 //   phase:   phase += 2π * freqEnv * dt; fmod 2π  — NEVER reset on gait change
 #include <cmath>
@@ -10,6 +10,17 @@
 #include "../config/config_types.h"
 
 static constexpr float kLocomotionOnsetAttackTauSec = 0.10f;
+static constexpr double kStopReleaseHandoffInTau = 0.6931471805599453; // ln(2)
+static constexpr double kStopReleaseDurationInTau = kStopReleaseHandoffInTau + 2.0;
+
+// Keep the original stop down to half amplitude, then replace only its
+// long tail. Both value and slope match at the handoff and vanish at end.
+static inline float StopReleaseGain(double elapsedSec, double tauSec) {
+  const double scaled = fmax(0.0, elapsedSec) / tauSec;
+  if (scaled <= kStopReleaseHandoffInTau) return (float)exp(-scaled);
+  const double remaining = fmax(0.0, 1.0 - (scaled - kStopReleaseHandoffInTau) / 2.0);
+  return (float)(0.5 * remaining * remaining);
+}
 
 // PLL phase tracking: positional-pull time constant (total rate is bounded
 // below, so large errors can take longer to settle) and the amplitude below
@@ -113,16 +124,14 @@ struct LocomotionEnvelope {
       if (!stopReleasing) {
         stopReleasing = true;
         releaseElapsedSec = 0.0;
-        releaseDurationSec = 2.0 * fmax(0.001, (double)toIdleTauSec);
+        releaseDurationSec = kStopReleaseDurationInTau * fmax(0.001, (double)toIdleTauSec);
         releaseStartAmp = ampEnv;
         releaseStartDown = downEnv;
       }
       releaseElapsedSec = fmin(releaseDurationSec, releaseElapsedSec + dt);
-      // A(t)=A0*max(0,1-t/(2*tau))^2: same initial slope as exponential
-      // decay, but both amplitude and its slope reach zero at 2*tau.
       // Snapshot once per stop; entering idle must not restart this clock.
-      const double remaining = 1.0 - releaseElapsedSec / releaseDurationSec;
-      const float gain = (float)(remaining * remaining);
+      const float gain = releaseElapsedSec >= releaseDurationSec ? 0.0f :
+          StopReleaseGain(releaseElapsedSec, releaseDurationSec / kStopReleaseDurationInTau);
       ampEnv = releaseStartAmp * gain;
       downEnv = releaseStartDown * gain;
     } else {

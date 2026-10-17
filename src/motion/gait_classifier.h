@@ -57,6 +57,28 @@ static inline bool IsPhaseAlignEligible(int gait, bool transitionToIdle,
   return IsLocomotionGait(gait) && !transitionToIdle && !jumpDetected;
 }
 
+// normalizedTime belongs to the Animator state, not the heaviest clip.
+// Blending a loop with a transition/unknown/different gait is ambiguous;
+// keep the current gait target but pause timing-based fitting/tracking.
+struct GaitTimingSample {
+  bool stable = true;
+  bool haveClip = false;
+  int gait = GaitNone;
+
+  void Observe(const GaitClassification &clip) {
+    if (!clip.loopStable ||
+        !IsPhaseAlignEligible(clip.gait, clip.transitionToIdle, clip.jumpDetected))
+      stable = false;
+    if (haveClip && clip.gait != gait) stable = false;
+    if (!haveClip) gait = clip.gait;
+    haveClip = true;
+  }
+
+  bool CanTrack(int selectedGait) const {
+    return haveClip && stable && gait == selectedGait;
+  }
+};
+
 // Symmetric (left-right alternating) locomotion loops produce TWO physical
 // oscillations per animation loop (one per step): the oscillator runs at 2x
 // the loop frequency, so the phase advances kLocomotionPhaseCyclesPerLoop
