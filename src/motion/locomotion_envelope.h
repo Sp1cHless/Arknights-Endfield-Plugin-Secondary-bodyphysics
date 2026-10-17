@@ -2,7 +2,7 @@
 // motion/locomotion_envelope.h — amplitude/frequency envelope with phase
 // integration (baseline review #11 semantics, user-confirmed "效果非常好"):
 //   desiredAngle(t) = ampEnv(t) * sin(phase(t))
-//   amp env: exponential approach, tau from profile (0.15s / 0.015s to-idle)
+//   amp env: exponential attack, finite quadratic stop release (2 x tau)
 //   freq env: exponential approach, tau 0.20s
 //   phase:   phase += 2π * freqEnv * dt; fmod 2π  — NEVER reset on gait change
 #include <cmath>
@@ -16,11 +16,6 @@ static constexpr float kLocomotionOnsetAttackTauSec = 0.10f;
 // which an initial hard snap is invisible (startup/character-switch align).
 static constexpr double kPhaseLockTauSec = 0.5;
 static constexpr float kPhaseSnapAmpThresholdRad = 0.02f;
-
-// Release tail: envelope energy below this (rad, ~0.6 deg) counts as
-// settled; the engine stops its tail write-through there (the remaining
-// snap is imperceptible).
-static constexpr float kReleaseTailEpsRad = 0.01f;
 
 // Rate-assisted PLL: integral gain (Hz per rad of phase error per second)
 // and the clamp of the auxiliary rate correction.  The positional pull
@@ -69,7 +64,7 @@ static float SelectLocomotionAttackTau(
 static inline bool ReleaseTailActive(bool stopArmed, bool groundLocomotion,
                                      float ampRad, float downRad) {
   return stopArmed && !groundLocomotion &&
-         (ampRad > kReleaseTailEpsRad || downRad > kReleaseTailEpsRad);
+         (ampRad > 0.0f || downRad > 0.0f);
 }
 
 struct LocomotionEnvelope {
@@ -80,6 +75,11 @@ struct LocomotionEnvelope {
   double phaseRef = 0.0;          // PLL tracking target ([0,2pi))
   double phaseLockTauSec = 0.0;   // >0 -> bounded pull toward phaseRef
   double phaseCorrHz = 0.0;       // PLL integral rate correction (clamped)
+  bool stopReleasing = false;
+  double releaseElapsedSec = 0.0;
+  double releaseDurationSec = 0.0;
+  float releaseStartAmp = 0.0f;
+  float releaseStartDown = 0.0f;
   FrameGate gate;  // frame-once advance (multi-instance safe)
 
   // PLL phase tracking: while valid, every Advance pulls the continuous
@@ -108,11 +108,30 @@ struct LocomotionEnvelope {
                  float freqTauSec) {
     if (!std::isfinite(dt) || dt <= 0.0f) return false;
     if (dt > 0.05f) dt = 0.05f;
-    float ampTau = toIdle ? toIdleTauSec : attackTauSec;
-    float kA = 1.0f - expf(-dt / ampTau);
     float kF = 1.0f - expf(-dt / freqTauSec);
-    ampEnv += (ampTarget - ampEnv) * kA;
-    downEnv += (downTarget - downEnv) * kA;
+    if (toIdle && ampTarget == 0.0f && downTarget == 0.0f) {
+      if (!stopReleasing) {
+        stopReleasing = true;
+        releaseElapsedSec = 0.0;
+        releaseDurationSec = 2.0 * fmax(0.001, (double)toIdleTauSec);
+        releaseStartAmp = ampEnv;
+        releaseStartDown = downEnv;
+      }
+      releaseElapsedSec = fmin(releaseDurationSec, releaseElapsedSec + dt);
+      // A(t)=A0*max(0,1-t/(2*tau))^2: same initial slope as exponential
+      // decay, but both amplitude and its slope reach zero at 2*tau.
+      // Snapshot once per stop; entering idle must not restart this clock.
+      const double remaining = 1.0 - releaseElapsedSec / releaseDurationSec;
+      const float gain = (float)(remaining * remaining);
+      ampEnv = releaseStartAmp * gain;
+      downEnv = releaseStartDown * gain;
+    } else {
+      stopReleasing = false;
+      float ampTau = toIdle ? toIdleTauSec : attackTauSec;
+      float kA = 1.0f - expf(-dt / ampTau);
+      ampEnv += (ampTarget - ampEnv) * kA;
+      downEnv += (downTarget - downEnv) * kA;
+    }
     freqEnv += (freqTarget - freqEnv) * kF;
     phase += 2.0 * 3.14159265358979 * freqEnv * dt;
     if (phaseLockTauSec > 0.0) {
@@ -162,6 +181,11 @@ struct LocomotionEnvelope {
     phaseRef = 0.0;
     phaseLockTauSec = 0.0;
     phaseCorrHz = 0.0;
+    stopReleasing = false;
+    releaseElapsedSec = 0.0;
+    releaseDurationSec = 0.0;
+    releaseStartAmp = 0.0f;
+    releaseStartDown = 0.0f;
     gate = FrameGate();
   }
 };

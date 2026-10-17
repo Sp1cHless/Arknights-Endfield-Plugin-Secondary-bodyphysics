@@ -424,6 +424,8 @@ static void TestEnvelope() {
   CHECK("verified stop tail active with energy off-gait",
         ReleaseTailActive(true, false, 0.1f, 0.0f) &&
             ReleaseTailActive(true, false, 0.0f, 0.02f));
+  CHECK("small finite tail continues to zero instead of an amplitude cutoff",
+        ReleaseTailActive(true, false, 0.0001f, 0.0f));
   CHECK("release tail inactive when settled or on locomotion",
         !ReleaseTailActive(true, false, 0.0f, 0.0f) &&
             !ReleaseTailActive(true, true, 0.1f, 0.1f));
@@ -431,7 +433,7 @@ static void TestEnvelope() {
         !ReleaseTailActive(false, false, 0.1f, 0.1f));
   // User-scale to-idle tau (0.3s): the decay must be GRADUAL (still most of
   // the amplitude shortly after the stop) and must eventually settle below
-  // the tail epsilon — the engine keeps writing this bounded decay instead
+  // zero — the engine keeps writing this bounded decay instead
   // of truncating it mid-swing.
   LocomotionEnvelope tail;
   for (int i = 0; i < 300; i++)
@@ -442,7 +444,58 @@ static void TestEnvelope() {
   for (int i = 0; i < 600; i++)
     EnvAdvance(tail, 0.0f, 0.0f, 1.7f, true, 0.15f, 0.3f, 0.20f);
   CHECK("slow to-idle tau decays gradually, no mid-swing snap",
-        earlyTail > target * 0.5f && tail.Amplitude() < kReleaseTailEpsRad);
+        earlyTail > target * 0.5f && tail.Amplitude() == 0.0f);
+  // Stop->idle is one continuous release. Verify the closed form at low
+  // amplitude too, where the old exponential tail could oscillate for ages.
+  bool finiteReleases = true;
+  bool releaseShape = true;
+  bool releaseFrequency = true;
+  for (float tau : {0.015f, 0.3f, 1.0f, 3.0f}) {
+    for (float startAmp : {0.001f, 0.15f, 0.5f}) {
+      for (float hz : {1.85f, 3.6f}) {
+        for (float dt : {1.0f/30, 1.0f/60, 1.0f/144}) {
+          LocomotionEnvelope release;
+          release.ampEnv = startAmp;
+          release.downEnv = startAmp * .4f;
+          release.freqEnv = hz;
+          double elapsed = 0.0;
+          float previous = startAmp;
+          int frames = (int)ceil(2.0 * tau / dt) + 1;
+          for (int i = 0; i < frames; i++) {
+            release.AdvanceDt(dt, 0, 0, hz, true, .15f, tau, .2f);
+            elapsed += dt;
+            double remaining = fmax(0.0, 1.0 - elapsed / (2.0 * tau));
+            float expected = (float)(startAmp * remaining * remaining);
+            releaseShape &= Near(release.ampEnv, expected, 1e-7f) &&
+                            Near(release.downEnv, expected * .4f, 1e-7f) &&
+                            release.ampEnv <= previous;
+            releaseFrequency &= release.freqEnv == hz;
+            previous = release.ampEnv;
+          }
+          finiteReleases &= release.ampEnv == 0 && release.downEnv == 0;
+        }
+      }
+    }
+  }
+  CHECK("finite stop release follows quadratic curve across amplitudes and frame rates", releaseShape);
+  CHECK("all stop releases reach exact zero within two tau plus one frame", finiteReleases);
+  CHECK("finite stop release preserves cadence", releaseFrequency);
+  LocomotionEnvelope restartRelease;
+  restartRelease.ampEnv = .2f;
+  restartRelease.downEnv = .1f;
+  restartRelease.AdvanceDt(.05f, 0, 0, 2, true, .15f, 1, .2f);
+  float beforeResume = restartRelease.ampEnv;
+  restartRelease.AdvanceDt(.05f, .2f, .1f, 2, false, .15f, 1, .2f);
+  CHECK("movement interrupts stop release with ordinary continuous attack",
+        !restartRelease.stopReleasing &&
+        Near(restartRelease.ampEnv, beforeResume + (.2f-beforeResume)*(1-expf(-.05f/.15f))));
+  float newStart = restartRelease.ampEnv;
+  restartRelease.AdvanceDt(.05f, 0, 0, 2, true, .15f, 1, .2f);
+  CHECK("next stop captures current amplitude and starts a fresh release",
+        Near(restartRelease.ampEnv, newStart * .975f * .975f));
+  restartRelease.Reset();
+  CHECK("runtime reset clears finite stop state",
+        !restartRelease.stopReleasing && restartRelease.releaseElapsedSec == 0);
   // Rate-assisted PLL: with the oscillator free-running at a WRONG
   // frequency while tracking a reference, the positional pull alone would
   // hold error = rate mismatch x tau forever (the frequency smoothing

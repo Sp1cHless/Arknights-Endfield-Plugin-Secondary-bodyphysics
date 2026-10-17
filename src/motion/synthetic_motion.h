@@ -64,7 +64,8 @@ struct SyntheticMotion {
                           envelope.Amplitude(), envelope.DownAmplitude());
     if (!c.transitionToIdle && !releaseTail)
       c.synthetic.stopRelease.armed = false;
-    if (c.transitionToIdle || releaseTail) {
+    const bool stopReleasing = c.transitionToIdle || releaseTail;
+    if (stopReleasing) {
       ampTarget = 0.0f;   // to-idle fast release
       downTarget = 0.0f;
       // Freeze the frequency at the oscillator's CURRENT value for the
@@ -85,7 +86,7 @@ struct SyntheticMotion {
         c.synthetic.locomotionOnsetActive);
 
     envelope.Advance(ampTarget, downTarget, freqTarget,
-                     c.transitionToIdle || releaseTail, attackTau,
+                     stopReleasing, attackTau,
                      p.envelope.toIdleReleaseTauSec,
                      p.envelope.frequencyTauSec);
 
@@ -100,7 +101,7 @@ struct SyntheticMotion {
       float ph = envelope.Phase();
       // asymmetric gait: upper half-cycle swings with `amp`, lower
       // half-cycle with `down` (symmetric when down config is 0)
-      if (amp > 0.001f || down > 0.001f)
+      if (amp > 0.001f || down > 0.001f || stopReleasing)
         angle = ph < 3.14159265358979f ? amp * sinf(ph) : down * sinf(ph);
       else
         angle = 0.0f;
