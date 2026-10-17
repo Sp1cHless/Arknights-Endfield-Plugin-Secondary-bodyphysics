@@ -2,7 +2,7 @@
 rem ============================================================
 rem publish_release.bat - build runtime, verify, publish the SINGLE
 rem Manager once, then assemble EN + ZH language packages.
-rem Usage: publish_release.bat [version-tag]   (default auto patch+1)
+rem Usage: publish_release.bat [version-tag]   (default: Manager project version)
 rem ============================================================
 setlocal
 
@@ -11,10 +11,12 @@ set "ROOT=%~dp0"
 set "DIST=%ROOT%dist"
 set "DOTNET=%ProgramFiles%\dotnet\dotnet.exe"
 if not exist "%DOTNET%" set "DOTNET=%LOCALAPPDATA%\Microsoft\dotnet\dotnet.exe"
-if "%VER%"=="" (
-    rem auto-increment patch: read dist\last_version.txt, bump the 3rd digit
-    for /f %%v in ('powershell -NoProfile -Command "$l=Get-Content '%DIST%\last_version.txt' -EA SilentlyContinue; if(-not $l){$l='v2.1.0'}; $m=[regex]::Match($l,'^v(\d+)\.(\d+)\.(\d+)'); if(-not $m.Success){'v2.1.0'} else { 'v{0}.{1}.{2}' -f $m.Groups[1].Value,$m.Groups[2].Value,([int]$m.Groups[3].Value+1) }"') do set "VER=%%v"
-)
+rem Package names must match the built program, regardless of older local zips.
+set "PROJECT_VER="
+for /f %%v in ('powershell -NoProfile -Command "$p=[xml](Get-Content -LiteralPath '%ROOT%Manager\SecondaryMotion.Manager.csproj' -Raw); 'v'+$p.SelectSingleNode('/Project/PropertyGroup/Version').InnerText"') do set "PROJECT_VER=%%v"
+if "%PROJECT_VER%"=="" ( echo [ERROR] Could not read Manager version & exit /b 1 )
+if "%VER%"=="" set "VER=%PROJECT_VER%"
+if not "%VER%"=="%PROJECT_VER%" ( echo [ERROR] Package version must match Manager version %PROJECT_VER% & exit /b 1 )
 echo Version: %VER%
 
 echo [1/5] Building runtime (sbm.dll + proxies) ...

@@ -23,7 +23,7 @@ void Write(string path, JsonObject value) {
     File.WriteAllText(path, value.ToJsonString());
 }
 JsonObject Chars(JsonObject root) => (JsonObject)root["characters"]!;
-(string Tool, string Game) Setup(string name, bool customized = false, bool development = false) {
+(string Tool, string Game) Setup(string name, bool customized = false, bool development = false, bool legacyMarkers = true) {
     string root = Path.Combine(output, name);
     string tool = Path.Combine(root, "tool"), game = Path.Combine(root, "game");
     string suffix = development ? ".json" : ".template.json";
@@ -40,8 +40,10 @@ JsonObject Chars(JsonObject root) => (JsonObject)root["characters"]!;
         Chars(node)["user_character"] = new JsonObject { ["keep"] = true };
         Write(Path.Combine(game, "presets/" + file + ".json"), node);
     }
-    File.WriteAllText(Path.Combine(game, "data/.jump_defaults_v3"), "previously migrated");
-    File.WriteAllText(Path.Combine(game, "data/.typhoeus_official_v1"), "previously migrated");
+    if (legacyMarkers) {
+        File.WriteAllText(Path.Combine(game, "data/.jump_defaults_v3"), "previously migrated");
+        File.WriteAllText(Path.Combine(game, "data/.typhoeus_official_v1"), "previously migrated");
+    }
     File.WriteAllText(Path.Combine(game, "presets/Ignore.template.json"), "not a working preset");
     return (tool, game);
 }
@@ -121,4 +123,26 @@ Check("invalid destination causes no partial database or preset writes",
     File.ReadAllText(Path.Combine(invalid.Game, "data/characters.default.json")) == invalidDb &&
     File.ReadAllText(Path.Combine(invalid.Game, "presets/Default.json")) == invalidPreset);
 Check("failed migration does not record completion", !File.Exists(Path.Combine(invalid.Game, "data/.official_characters_v1.json")));
+
+// Exercise the real startup order, including old users who never ran the
+// legacy migrations, then load through the same mirroring services as AppCtx.
+var firstUpdate = Setup("full-startup-chain", legacyMarkers: false);
+File.Copy(Path.Combine(repository, "SecondaryMotion/presets/Default.v3.0.0-bad.template.json"),
+    Path.Combine(firstUpdate.Tool, "presets/Default.v3.0.0-bad.template.json"));
+Check("startup Typhoeus migration succeeds", TyphoeusOfficialMigration.Apply(firstUpdate.Tool, firstUpdate.Game).StartsWith("applied:"));
+Check("startup official-character migration succeeds", OfficialCharactersMigration.Apply(firstUpdate.Tool, firstUpdate.Game).StartsWith("applied:"));
+Check("startup legacy Jump migration succeeds", JumpDefaultsMigration.Apply(firstUpdate.Tool, firstUpdate.Game).StartsWith("applied:"));
+Check("startup legacy hotfix succeeds", JumpDefaultsV301Hotfix.Apply(firstUpdate.Tool, firstUpdate.Game).StartsWith("applied:"));
+Check("complete Si survives the entire startup chain", JsonNode.DeepEquals(
+    Chars(Read(Path.Combine(firstUpdate.Game, "presets/Default.json")))[Si], Chars(preset)[Si]));
+var dbService = new CharacterDatabaseService(firstUpdate.Game, firstUpdate.Tool);
+var models = dbService.Load();
+var byId = models.ToDictionary(model => model.Id);
+var presetsService = new PresetService(firstUpdate.Game, firstUpdate.Tool);
+presetsService.LoadInto("Default", models, byId, false);
+Check("Manager model loads the migrated Si with bones and axis", dbService.Loaded && byId.TryGetValue(Si, out var si) &&
+    si.BoneRight == "R_breast_01_jnt" && si.BoneLeft == "L_breast_01_jnt" && si.Axis == "Z" && si.AxisSign == 1);
+Check("Manager model retains the shipped Si motion parameters", byId[Si].Freq[1] == 1.7 &&
+    byId[Si].Freq[2] == 2.7 && byId[Si].Freq[3] == 3.4 && byId[Si].Amp[3] == 45 &&
+    byId[Si].JumpAmplitude == 40 && byId[Si].EnvIdle == 0.7);
 Console.WriteLine($"RESULT: {passed} passed");

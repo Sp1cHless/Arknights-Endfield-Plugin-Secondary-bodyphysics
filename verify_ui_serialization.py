@@ -214,26 +214,27 @@ require("RecoverInvalidActivePreset(Presets)" in appctx,
 require("if (!Presets.IsSelectablePreset(name))" in appctx,
         "SwitchPreset must reject invalid or missing preset names before writing config")
 
-# The next package after the current v3.1.1 release is v3.1.2.  Manager and
+# The v3.2.0 package includes the motion fixes and Si profile. Manager and
 # native PE metadata must identify that same build, and package assembly must
 # stop instead of zipping after a required copy/localization failure.
 manager_project = text("Manager/SecondaryMotion.Manager.csproj")
 for expected in [
-    "<Version>3.1.2</Version>",
-    "<AssemblyVersion>3.1.2.0</AssemblyVersion>",
-    "<FileVersion>3.1.2.0</FileVersion>",
+    "<Version>3.2.0</Version>",
+    "<AssemblyVersion>3.2.0.0</AssemblyVersion>",
+    "<FileVersion>3.2.0.0</FileVersion>",
 ]:
-    require(expected in manager_project, "Manager release metadata must be 3.1.2")
+    require(expected in manager_project, "Manager release metadata must be 3.2.0")
 native_version = text("src/version.rc")
 for expected in [
     "#define SM_VERSION_MAJOR 3",
-    "#define SM_VERSION_MINOR 1",
-    "#define SM_VERSION_PATCH 2",
-    '"Endfield Secondary Motion Tool v3.1.2"',
+    "#define SM_VERSION_MINOR 2",
+    "#define SM_VERSION_PATCH 0",
+    '"Endfield Secondary Motion Tool v3.2.0"',
 ]:
-    require(expected in native_version, "native release metadata must be 3.1.2")
-require("contains 20 official character profiles" in text("README.md"),
-        "README official profile count must match the 20-entry DB")
+    require(expected in native_version, "native release metadata must be 3.2.0")
+official_count = len(json.loads(text("SecondaryMotion/data/characters.default.json"))["characters"])
+require(f"contains {official_count} official character profiles" in text("README.md"),
+        "README official profile count must match the packaged DB")
 assembler = text("assemble_one.bat")
 require(assembler.count("|| goto :assemble_failed") >= 10,
         "package assembly must fail closed on required copy/localization errors")
