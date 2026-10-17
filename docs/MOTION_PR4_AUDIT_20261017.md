@@ -50,3 +50,13 @@ Up/Down 共用同一个进度，stop→idle 不重启计时，重新移动从当
 - 曲线图：`artifacts/motion-audit/game-preset/comparison.png`，为模型对照图。
 - 完整验证日志：`verify_motion_audit.log`。
 - 游戏目录的三个 DLL 均与本次开始前的部署记录哈希一致，本次未安装。
+
+## 后续：进入 sprint 后的频率迟滞
+
+用户明确延迟发生在 dash 结束、已进入 sprint 之后。当前角色 `frequency_tau_sec=1`，频率包络补齐 63% 的目标差值需约 1 秒，95% 需约 3 秒；这是代码和参数可直接确认的迟滞来源。历史 dash 片段的无写入窗口不能解释用户指出的这段现象。
+
+本次最终只修改步态切换的频率平滑：新进入已支持的 locomotion gait 时，以不大于 0.10 秒的内部时间常数追踪该步态的配置/有效缓存目标，补齐约 95% 差值后恢复普通 `frequency_tau_sec`。停止、跳跃和不支持动画后重新进入 locomotion 也适用。后续同一步态的频率拟合微调继续使用配置平滑。没有修改振幅包络、落地控制器、dash 白名单、频率测量算法或 PLL ±20% 总限速。
+
+新增测试覆盖四种 locomotion gait 的有向切换、20/30/60/144fps、相位连续性、已有更快用户配置、停止频率冻结和跳跃后重新进入 sprint 的状态重置。`verify.bat` 最终为 **427 passed，0 failed**，完整构建通过，日志为 `verify_gait_frequency_transition.log`。
+
+以上验证了频率包络的响应，没有把它等同于实机中的最终摆动速度。实际相位速度还含 PLL 修正；安装后应短测 run→sprint 和落地后 sprint，同时比较 `freq_env_hz` 与 `phase_rad` 推导出的实际频率。本次仍未安装。

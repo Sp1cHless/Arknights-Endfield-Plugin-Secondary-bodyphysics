@@ -34,6 +34,7 @@ struct SyntheticRuntime {
   // threshold for several samples (hysteresis).  Pure logic lives in
   // motion/freq_lock.h so verify_tests can unit-test it.
   FreqLockState freq;
+  FreqTransitionState freqTransition;
   float outAngleRad = 0.0f;
   Quat lastNativeR = QuatIdentity();
   Quat lastNativeL = QuatIdentity();

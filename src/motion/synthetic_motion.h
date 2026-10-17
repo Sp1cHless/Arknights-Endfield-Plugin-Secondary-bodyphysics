@@ -84,11 +84,15 @@ struct SyntheticMotion {
         ampTarget, downTarget, p.envelope.amplitudeAttackTauSec,
         c.synthetic.wasGroundLocomotionMoving,
         c.synthetic.locomotionOnsetActive);
+    const float frequencyTau = SelectGaitFrequencyTau(
+        c.synthetic.freqTransition, gait,
+        IsPhaseAlignEligible(gait, c.transitionToIdle, c.jumpDetected),
+        envelope.Frequency(), freqTarget, p.envelope.frequencyTauSec);
 
     envelope.Advance(ampTarget, downTarget, freqTarget,
                      stopReleasing, attackTau,
                      p.envelope.toIdleReleaseTauSec,
-                     p.envelope.frequencyTauSec);
+                     frequencyTau);
 
     float angle;
     if (c.jumpActive) {

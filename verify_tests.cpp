@@ -1574,6 +1574,60 @@ static void TestStopRelease() {
   }
 }
 
+static void TestGaitFrequencyTransition() {
+  printf("[GAIT FREQUENCY TRANSITION]\n");
+  bool fastResponse = true, continuous = true, phaseContinuous = true;
+  for (int from = GaitWalk; from <= GaitZipline; from++) {
+    for (int to = GaitWalk; to <= GaitZipline; to++) {
+      if (from == to) continue;
+      for (float dt : {1.0f/20, 1.0f/30, 1.0f/60, 1.0f/144}) {
+        FreqTransitionState state;
+        LocomotionEnvelope env;
+        float initial = 1.0f + from * .6f;
+        float target = 1.0f + to * .6f;
+        env.freqEnv = initial;
+        env.SetPhase(2.5);
+        SelectGaitFrequencyTau(state, from, true, initial, initial, 1);
+        for (int frame = 0; frame < (int)ceil(.35f/dt); frame++) {
+          float previous = env.freqEnv;
+          double oldPhase = env.phase;
+          float tau = SelectGaitFrequencyTau(state, to, true, previous, target, 1);
+          env.AdvanceDt(dt, 0, 0, target, false, .15f, 1, tau);
+          continuous &= fabsf(env.freqEnv-previous) < fabsf(target-initial)*.4f;
+          phaseContinuous &= fabs(WrapPhaseError(oldPhase, env.phase) -
+                                  6.28318530717959*env.freqEnv*dt) < 1e-6;
+        }
+        fastResponse &= fabsf(env.freqEnv-target) <= fabsf(target-initial)*.051f;
+      }
+    }
+  }
+  CHECK("all gait frequency transitions cover 95 percent of gap within 0.35s", fastResponse);
+  CHECK("gait frequency transitions remain smooth instead of snapping cadence", continuous);
+  CHECK("fast frequency transition never resets oscillator phase", phaseContinuous);
+  FreqTransitionState state;
+  SelectGaitFrequencyTau(state, GaitRun, true, 3, 3, 1);
+  CHECK("run to sprint selects fast frequency smoothing",
+        Near(SelectGaitFrequencyTau(state, GaitSprint, true, 3, 3.6f, 1), .1f));
+  CHECK("same gait resumes configured smoothing after transition settles",
+        Near(SelectGaitFrequencyTau(state, GaitSprint, true, 3.59f, 3.6f, 1), 1));
+  CHECK("later same-gait fitting changes retain configured smoothing",
+        Near(SelectGaitFrequencyTau(state, GaitSprint, true, 3.6f, 3.8f, 1), 1));
+  CHECK("stop or jump cancels frequency transition without changing configured tau",
+        Near(SelectGaitFrequencyTau(state, GaitRun, false, 3, 3, 1), 1) && state.gait == GaitNone);
+  CHECK("landing followed by sprint rearms fast cadence response",
+        Near(SelectGaitFrequencyTau(state, GaitSprint, true, 3, 3.6f, 1), .1f));
+  FreqTransitionState faster;
+  CHECK("frequency transition respects an already faster user setting",
+        Near(SelectGaitFrequencyTau(faster, GaitSprint, true, 3, 3.6f, .03f), .03f));
+  LocomotionEnvelope stop;
+  stop.freqEnv = 3.6f;
+  for (int frame = 0; frame < 180; frame++) {
+    float tau = SelectGaitFrequencyTau(state, GaitWalk, false, stop.freqEnv, stop.freqEnv, 1);
+    stop.AdvanceDt(1.0f/60, 0, 0, stop.freqEnv, true, .15f, 1, tau);
+  }
+  CHECK("fast gait cadence policy leaves stop-release frequency frozen", stop.freqEnv == 3.6f);
+}
+
 static void TestFreqLock() {
   printf("[FREQ-LOCK]\n");
   const char *clip = "run_loop";
@@ -2125,6 +2179,7 @@ int main() {
   TestJumpPhaseAProbe();
   TestJumpInertialSource();
   TestFreqLock();
+  TestGaitFrequencyTransition();
   TestStopRelease();
   TestTransformRecorderPolicy();
 

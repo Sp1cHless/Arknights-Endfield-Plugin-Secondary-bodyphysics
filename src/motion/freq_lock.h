@@ -137,6 +137,35 @@ static inline float FreqLockTargetHz(const FreqLockState &f,
              ? f.useHz : g.frequencyHz;
 }
 
+// Cadence may respond quickly to a newly accepted gait without changing
+// what the frequency fitter learns, or speeding up subsequent same-gait
+// adjustments. Pauses/Jump/stops rearm this for the next locomotion entry.
+struct FreqTransitionState {
+  int gait = GaitNone;
+  bool active = false;
+  float toleranceHz = 0.0f;
+};
+
+static constexpr float kGaitFrequencyTransitionTauSec = 0.10f;
+
+static inline float SelectGaitFrequencyTau(
+    FreqTransitionState &state, int gait, bool moving, float currentHz,
+    float targetHz, float configuredTauSec) {
+  if (!moving) {
+    state = FreqTransitionState();
+    return configuredTauSec;
+  }
+  if (state.gait != gait) {
+    state.gait = gait;
+    state.active = true;
+    state.toleranceHz = fmaxf(0.005f, fabsf(targetHz - currentHz) * 0.05f);
+  }
+  if (state.active && fabsf(targetHz - currentHz) <= state.toleranceHz)
+    state.active = false;
+  return state.active ? fminf(configuredTauSec, kGaitFrequencyTransitionTauSec)
+                      : configuredTauSec;
+}
+
 // One 20Hz sample.  `g` is the per-gait GaitParam of the current clip;
 // `clipName` change restarts measurement; `cache` holds the learned
 // (characterId, gait) frequencies so switches reuse them instead of falling
