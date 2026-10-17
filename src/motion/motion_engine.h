@@ -121,6 +121,20 @@ public:
     if (active_.profile->motionMode != MotionMode::Synthetic) return;
     if (!active_.synthetic.targetValid) return;
     if (!active_.bones.breastR || !active_.bones.breastL) return;
+    // PATCH 2026-10: identity gate.
+    // Write only while the verified main-character entity/animator chain
+    // still points at the character that was bound.  The chain can flip
+    // between two characters for several frames (quests that load a second
+    // character model); during the flip the bound bone pointers belong to a
+    // different character than the one the composition was computed for, and
+    // writing then rotates the chest of the wrong character.
+    if (!PhaseDEntityAnimatorPairValid(active_)) {
+      static DWORD s_gateLogT = 0;
+      if (RateLimit(s_gateLogT, 1000))
+        ProbeLog("[GATE] identity mismatch -> write skipped\n");
+      active_.synthetic.targetValid = false;
+      return;
+    }
     // verified-window gate (baseline: 150ms since main-char bone verify)
     if (NowMs() - active_.replay.bonesVerifiedMs >
         cfg->global.replayVerifyWindowMs)
@@ -182,6 +196,20 @@ private:
     if (!cfg) return;
     if (!cfg->pluginEnabled) return;  // global switch OFF — no write
     if (!active_.bones.breastR || !active_.bones.breastL) return;
+    // PATCH 2026-10: identity gate.
+    // Write only while the verified main-character entity/animator chain
+    // still points at the character that was bound.  The chain can flip
+    // between two characters for several frames (quests that load a second
+    // character model); during the flip the bound bone pointers belong to a
+    // different character than the one the composition was computed for, and
+    // writing then rotates the chest of the wrong character.
+    if (!PhaseDEntityAnimatorPairValid(active_)) {
+      static DWORD s_gateLogT = 0;
+      if (RateLimit(s_gateLogT, 1000))
+        ProbeLog("[GATE] identity mismatch -> write skipped\n");
+      active_.synthetic.targetValid = false;
+      return;
+    }
     __try {
       float angle = synthetic_.ComputeAngle(active_, *active_.profile);
       const bool liveJumpConfigured =

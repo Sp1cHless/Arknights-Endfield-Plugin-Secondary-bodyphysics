@@ -504,6 +504,37 @@ static void TestSyntheticBaseFilter() {
   CHECK("synthetic base suppresses near-frequency native twist",
         maxNativeResidualDeg < 1.6f);
 
+  SyntheticBaseFilter feedback;
+  Quat feedbackR, feedbackL;
+  feedback.Compose(QuatIdentity(), QuatIdentity(), 2, DegToRad(20.0f),
+                   dt, feedbackR, feedbackL);
+  for (int frame = 0; frame < 600; ++frame) {
+    const Quat previousR = feedbackR;
+    const Quat previousL = feedbackL;
+    feedback.Compose(previousR, previousL, 2, DegToRad(20.0f),
+                     dt, feedbackR, feedbackL);
+  }
+  CHECK("reading our own output never accumulates rotation",
+        Near(ZAngleDeg(feedbackR), 20.0f, 1e-3f) &&
+            Near(ZAngleDeg(feedbackL), 20.0f, 1e-3f));
+  Quat equivalent = {-feedbackR.x, -feedbackR.y, -feedbackR.z, -feedbackR.w};
+  feedback.Compose(equivalent, equivalent, 2, DegToRad(20.0f),
+                   dt, feedbackR, feedbackL);
+  CHECK("equivalent quaternion signs still block self feedback",
+        Near(ZAngleDeg(feedbackR), 20.0f, 1e-3f));
+  const Quat changedNative = QuatAxisAngle(2, DegToRad(10.0f));
+  feedback.Compose(changedNative, changedNative, 2, DegToRad(20.0f),
+                   dt, feedbackR, feedbackL);
+  CHECK("a refreshed native pose still updates the composition base",
+        ZAngleDeg(feedback.baseR) > 0.1f && ZAngleDeg(feedback.baseR) < 10.0f);
+  feedback.Reset();
+  CHECK("reset discards previous output and native base",
+        !feedback.hasLastOut && !feedback.initialized);
+  feedback.Compose(changedNative, changedNative, 2, DegToRad(5.0f),
+                   dt, feedbackR, feedbackL);
+  CHECK("composition after reset captures the new native pose",
+        Near(ZAngleDeg(feedbackR), 15.0f, 1e-3f));
+
   Quat directR, directL;
   Quat current = QuatAxisAngle(2, DegToRad(10.0f));
   filter.ComposeDirect(current, current, 2, DegToRad(5.0f), directR, directL);

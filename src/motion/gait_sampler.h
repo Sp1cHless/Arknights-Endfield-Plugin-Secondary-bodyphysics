@@ -122,6 +122,17 @@ class GaitSampler {
 public:
   GaitSampler(AnimatorClipReader &reader) : reader_(reader) {}
 
+  // PATCH 2026-10: switch hysteresis.
+  // The game's controlled-entity chain can flip between two characters for
+  // several consecutive frames (observed after quests that pull a second
+  // character model into the scene).  Rebinding on every flip rebuilt the
+  // synthetic base and the bone pointers constantly and produced
+  // cross-character writes (chest rotating away).  Require the candidate to
+  // stay the main animator for kSwitchSettleMs before rebinding.
+  static constexpr DWORD kSwitchSettleMs = 150;
+  void *switchCandidate_ = nullptr;
+  DWORD switchCandidateSinceMs_ = 0;
+
   // Hot-reload / forced refresh: reset the active runtime but keep the
   // animator, then re-identify + re-bind profile from the NEW snapshot.
   // Runs on the main thread (PreLateTick).
@@ -157,6 +168,21 @@ public:
 
     // Character switch detection: reset everything, re-find bones
     if (callerAnimator != active.animator) {
+      // PATCH: settle the candidate first (see kSwitchSettleMs).
+      if (switchCandidate_ != callerAnimator) {
+        switchCandidate_ = callerAnimator;
+        switchCandidateSinceMs_ = now;
+        ProbeLog("[SWITCH-PENDING] animator %p -> %p (settling %ums)\n",
+                 (void *)active.animator, (void *)callerAnimator,
+                 (unsigned)kSwitchSettleMs);
+      }
+      if (now - switchCandidateSinceMs_ < kSwitchSettleMs) {
+        // Not settled yet: keep the previous binding untouched.  The identity
+        // gate in the motion engine suppresses writes while the chain is
+        // ambiguous, so no wrong-character write can happen in the meantime.
+        return;
+      }
+      switchCandidate_ = nullptr;
       bool isSwitch = (active.animator != nullptr);
       ProbeLog("[SWITCH] animator %p -> %p%s\n", (void *)active.animator,
                (void *)callerAnimator, isSwitch ? " (re-finding)" : "");
@@ -166,6 +192,8 @@ public:
       active.rootTransform = SafeGetComponentTransform(callerAnimator);
       BindProfile(active, cfg);
       active.valid = true;
+    } else {
+      switchCandidate_ = nullptr;  // PATCH: stable again
     }
 
     // Bone discovery when missing (main character only)
