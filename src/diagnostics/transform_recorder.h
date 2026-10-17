@@ -158,6 +158,14 @@ static void TransformRecorderFrame(const ActiveCharacterRuntime &c) {
   TransformRecorderAppendQuat(parentWorldL);
   TransformRecorderAppendQuat(grandWorldR);
   TransformRecorderAppendQuat(grandWorldL);
+  fprintf(g_recFile, ",%lu,%d,%d,%d,%d,%d,%d,",
+          s.clipSampleMs, s.clipReadOk ? 1 : 0,
+          c.transitionToIdle ? 1 : 0, s.stopRelease.armed ? 1 : 0,
+          s.stopRelease.blocked ? 1 : 0, s.stopRelease.wasStop ? 1 : 0,
+          s.releaseTail ? 1 : 0);
+  TransformRecorderCsvText(g_recFile, s.dominantClip);
+  fputc(',', g_recFile);
+  TransformRecorderCsvText(g_recFile, s.releaseBlockedClip);
   fputc('\n', g_recFile);
 
   g_recFrames++;

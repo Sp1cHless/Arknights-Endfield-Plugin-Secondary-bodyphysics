@@ -21,7 +21,18 @@ static constexpr const char *kTransformRecorderCsvHeader =
     "parentWorldRx,parentWorldRy,parentWorldRz,parentWorldRw,"
     "parentWorldLx,parentWorldLy,parentWorldLz,parentWorldLw,"
     "grandWorldRx,grandWorldRy,grandWorldRz,grandWorldRw,"
-    "grandWorldLx,grandWorldLy,grandWorldLz,grandWorldLw";
+    "grandWorldLx,grandWorldLy,grandWorldLz,grandWorldLw,"
+    "clip_sample_ms,clip_read_ok,transition_to_idle,stop_armed,stop_blocked,"
+    "stop_seen,release_tail,dominant_clip,blocked_clip";
+
+static inline bool TransformRecorderCsvText(FILE *file, const char *value) {
+  if (!file || fputc('"', file) == EOF) return false;
+  for (const char *p = value ? value : ""; *p; ++p) {
+    if (*p == '"' && fputc('"', file) == EOF) return false;
+    if (fputc(*p, file) == EOF) return false;
+  }
+  return fputc('"', file) != EOF;
+}
 
 static inline bool TransformRecorderShouldAutoStop(int frames) {
   return frames >= kTransformRecorderMaxFrames;

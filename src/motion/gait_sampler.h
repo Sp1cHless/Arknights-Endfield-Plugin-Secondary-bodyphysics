@@ -238,6 +238,10 @@ public:
       const bool identityValid = PhaseDEntityAnimatorPairValid(active);
       movement = g_movementSignalProbe.Sample(g_mainCharEntity, identityValid);
     }
+    active.synthetic.clipSampleMs = now;
+    active.synthetic.clipReadOk = false;
+    active.synthetic.dominantClip[0] = 0;
+    active.synthetic.releaseBlockedClip[0] = 0;
     if (!reader_.ReadLayer0(callerAnimator, clips, 8, count, &readStatus)) {
       active.synthetic.stopRelease.armed = false;
       active.synthetic.stopRelease.blocked = true;
@@ -248,6 +252,8 @@ public:
       return;
     }
 
+    active.synthetic.clipReadOk = true;
+    float dominantWeight = -1.0f;
     int bestGait = GaitNone;
     float bestW = -1.0f;
     bool transToIdle = false;
@@ -263,6 +269,15 @@ public:
       GaitClassification cls =
           ClassifyClipNameFull(clips[i].name, active.profile);
       releaseSample.Observe(clips[i].name, cls, clips[i].weight);
+      if (clips[i].weight > dominantWeight) {
+        dominantWeight = clips[i].weight;
+        snprintf(active.synthetic.dominantClip,
+                 sizeof(active.synthetic.dominantClip), "%s", clips[i].name);
+      }
+      if (releaseSample.blocked && !active.synthetic.releaseBlockedClip[0])
+        snprintf(active.synthetic.releaseBlockedClip,
+                 sizeof(active.synthetic.releaseBlockedClip), "%s",
+                 clips[i].name[0] ? clips[i].name : "<unnamed>");
       if (cls.gait >= GaitIdle && clips[i].weight > bestW) {
         bestW = clips[i].weight;
         bestGait = cls.gait;

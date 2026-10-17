@@ -45,6 +45,11 @@ struct SyntheticRuntime {
   // Release-tail write-through flag for the engine's synthetic write gate
   // (derived fresh by SyntheticMotion every frame; never persists).
   bool releaseTail = false;
+  // Read-only trace context, refreshed at the existing 20Hz clip sample.
+  DWORD clipSampleMs = 0;
+  bool clipReadOk = false;
+  char dominantClip[128] = {0};
+  char releaseBlockedClip[128] = {0};
 };
 
 struct JumpRuntime {

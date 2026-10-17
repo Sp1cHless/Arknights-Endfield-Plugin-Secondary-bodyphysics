@@ -1721,6 +1721,21 @@ static void TestTransformRecorderPolicy() {
   CHECK("recorder session filename is recognizable",
         strstr(first, "breast_record_20260905_125524_100.csv") != nullptr);
 
+  CHECK("recorder identifies stop cancellation and the sampled clips",
+        strstr(kTransformRecorderCsvHeader,
+               "stop_armed,stop_blocked,stop_seen,release_tail,dominant_clip,blocked_clip") != nullptr);
+  FILE *csvText = tmpfile();
+  CHECK("recorder text test opens a temporary stream", csvText != nullptr);
+  if (csvText) {
+    bool written = TransformRecorderCsvText(csvText, "clip,\"quoted\"");
+    rewind(csvText);
+    char quoted[64] = {0};
+    fread(quoted, 1, sizeof(quoted) - 1, csvText);
+    CHECK("recorder quotes commas and embedded quotes in animation names",
+          written && strcmp(quoted, "\"clip,\"\"quoted\"\"\"") == 0);
+    fclose(csvText);
+  }
+
   CHECK("recorder CSV carries pre-write pose",
         strstr(kTransformRecorderCsvHeader, "preRx,preRy,preRz,preRw") !=
             nullptr);
