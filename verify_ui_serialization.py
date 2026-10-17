@@ -173,6 +173,19 @@ require("if (target[CharacterId] != null)" in typh_migration,
 require("target[CharacterId] = officialEntry.DeepClone();" in typh_migration,
         "Typhoeus migration must add the exact official object when missing")
 app_source = text("Manager/App.xaml.cs")
+si_id = "chr_0036_jsspsi"
+require(si_id in official_db and si_id in official_default,
+        "official database and Default package templates must contain Si")
+official_migration = text("Manager/Services/OfficialCharactersMigration.cs")
+require("if (characters.ContainsKey(id)) continue;" in official_migration and
+        '"processed_ids"' in official_migration,
+        "official character migration must preserve existing profiles and later deletions")
+require("OfficialCharactersMigration.Apply(ManagerDir, dataRoot)" in app_source and
+        app_source.index("OfficialCharactersMigration.Apply(ManagerDir, dataRoot)") <
+        app_source.index("JumpDefaultsMigration.Apply(ManagerDir, dataRoot)") and
+        app_source.index("OfficialCharactersMigration.Apply(ManagerDir, dataRoot)") <
+        app_source.index("Ctx = new AppCtx(dataRoot, ManagerDir)"),
+        "new official profiles must migrate before legacy Jump seeding and model load")
 require("TyphoeusOfficialMigration.Apply(ManagerDir, dataRoot)" in app_source and
         app_source.index("TyphoeusOfficialMigration.Apply(ManagerDir, dataRoot)") <
         app_source.index("Ctx = new AppCtx(dataRoot, ManagerDir)"),

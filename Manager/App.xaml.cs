@@ -133,6 +133,11 @@ public partial class App : Application {
             // Existing user-recorded DB/preset objects are never replaced.
             diag.AppendLine("typhoeus_official_v1: " +
                 TyphoeusOfficialMigration.Apply(ManagerDir, dataRoot));
+            // New official ids (including Si) are added once without replacing
+            // user profiles. Run before legacy Jump migration can create a
+            // Jump-only preset entry, and before loading the mirrored model.
+            diag.AppendLine("official_characters_v1: " +
+                OfficialCharactersMigration.Apply(ManagerDir, dataRoot));
             // v3 update: replace only the official Jump blocks once. Existing
             // gait tuning, bones, names, custom characters and other data stay.
             diag.AppendLine("jump_defaults_v3: " +

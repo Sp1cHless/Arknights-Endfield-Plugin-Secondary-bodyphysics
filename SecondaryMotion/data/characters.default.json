@@ -387,6 +387,26 @@
         "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 40, "damping_tau_sec": 0.7, "frequency_hz": 2.5, "max_duration_sec": 4.4, "takeoff_delay_sec": 0.08, "rising_target_deg": -35, "apex_falling_target_deg": 30, "acceleration_response": 0.4, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 1.65, "damping_ratio": 0.52, "landing_impulse_gain": 60 },
         "native_amplify": { "factor": 2 }
       }
+    },
+    "chr_0036_jsspsi": {
+      "display_name": "Si",
+      "bones": { "right": "R_breast_01_jnt", "left": "L_breast_01_jnt", "allow_fallback_candidates": true },
+      "defaults": {
+        "gait": {
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 },
+          "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 10, "frequency_hz": 3 }
+        },
+        "envelope": {
+          "amplitude_attack_tau_sec": 0.5,
+          "frequency_tau_sec": 0.2,
+          "to_idle_release_tau_sec": 0.7
+        },
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 40, "damping_tau_sec": 0.7, "frequency_hz": 2.5, "max_duration_sec": 4.4, "takeoff_delay_sec": 0.08, "rising_target_deg": -35, "apex_falling_target_deg": 30, "acceleration_response": 0.4, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 1.65, "damping_ratio": 0.52, "landing_impulse_gain": 60 },
+        "native_amplify": { "factor": 2 }
+      }
     }
   }
 }
