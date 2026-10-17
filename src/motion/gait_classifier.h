@@ -14,6 +14,27 @@ struct GaitClassification {
   bool loopStable = false;      // stable locomotion loop (usable phase ref)
 };
 
+// Runtime clip weights can be zero/NaN/garbage even when the clip identity
+// is readable. Keep a known clip selectable without authorizing unknowns.
+static float SafeClipBlendWeight(float weight) {
+  return std::isfinite(weight) && weight >= 0.0f && weight <= 1.0f
+             ? weight : 0.0f;
+}
+
+struct GaitClipSelection {
+  GaitClassification classification;
+  float rank = -1.0f;
+
+  bool Observe(const GaitClassification &candidate, float rawWeight) {
+    if (candidate.gait < GaitIdle) return false;
+    const float candidateRank = SafeClipBlendWeight(rawWeight);
+    if (candidateRank <= rank) return false;
+    classification = candidate;
+    rank = candidateRank;
+    return true;
+  }
+};
+
 static bool IsLocomotionGait(int gait) {
   return gait >= GaitWalk && gait <= GaitZipline;
 }

@@ -255,7 +255,7 @@ public:
     active.synthetic.clipReadOk = true;
     float dominantWeight = -1.0f;
     int bestGait = GaitNone;
-    float bestW = -1.0f;
+    GaitClipSelection bestClip;
     bool transToIdle = false;
     bool landing = false;
     bool jumpStart = false;
@@ -269,8 +269,9 @@ public:
       GaitClassification cls =
           ClassifyClipNameFull(clips[i].name, active.profile);
       releaseSample.Observe(clips[i].name, cls, clips[i].weight);
-      if (clips[i].weight > dominantWeight) {
-        dominantWeight = clips[i].weight;
+      const float clipRank = SafeClipBlendWeight(clips[i].weight);
+      if (clipRank > dominantWeight) {
+        dominantWeight = clipRank;
         snprintf(active.synthetic.dominantClip,
                  sizeof(active.synthetic.dominantClip), "%s", clips[i].name);
       }
@@ -278,8 +279,7 @@ public:
         snprintf(active.synthetic.releaseBlockedClip,
                  sizeof(active.synthetic.releaseBlockedClip), "%s",
                  clips[i].name[0] ? clips[i].name : "<unnamed>");
-      if (cls.gait >= GaitIdle && clips[i].weight > bestW) {
-        bestW = clips[i].weight;
+      if (bestClip.Observe(cls, clips[i].weight)) {
         bestGait = cls.gait;
         bestLoopStable = cls.loopStable;
         snprintf(bestClipName, sizeof(bestClipName), "%s", clips[i].name);

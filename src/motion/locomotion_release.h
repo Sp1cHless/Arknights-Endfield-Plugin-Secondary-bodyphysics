@@ -9,16 +9,15 @@ static bool IsAttackClip(const char *name) {
          strstr(name, "ult") || strstr(name, "_air_");
 }
 
-// Inspect every contributing clip: an unsupported blend must cancel a stop
-// even when a lower-weight locomotion stop remains in the layer.
+// Weights are not reliable evidence of absence on this runtime. Inspect each
+// readable clip: an unsupported blend still cancels the stop, even at weight 0.
 struct StopReleaseSample {
   bool stop = false;
   bool idle = false;
   bool moving = false;
   bool blocked = false;
 
-  void Observe(const char *name, const GaitClassification &cls, float weight) {
-    if (!(weight > 0.0f)) return;
+  void Observe(const char *name, const GaitClassification &cls, float /*weight*/) {
     if (!name || IsAttackClip(name) || cls.jumpDetected) {
       blocked = true;
     } else if (IsLocomotionGait(cls.gait)) {

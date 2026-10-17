@@ -252,7 +252,8 @@ private:
       const bool releaseTail =
           !active_.jumpDetected && active_.synthetic.releaseTail;
       const bool blockedStop = active_.transitionToIdle &&
-                               active_.synthetic.stopRelease.blocked;
+          (!active_.synthetic.stopRelease.armed ||
+           active_.synthetic.stopRelease.blocked);
       if (!jumpOut.valid && (blockedStop ||
           !CanWriteSynthetic(active_.currentGait, active_.jumpDetected,
                              active_.profile->jump.enabled) &&

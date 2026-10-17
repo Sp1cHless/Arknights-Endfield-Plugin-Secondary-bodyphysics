@@ -4,6 +4,7 @@
 #include <cstring>
 #include <cmath>
 #include <string>
+#include <limits>
 
 #include "src/common/quat.h"
 #include "src/config/json_mini.h"
@@ -540,6 +541,19 @@ static void TestSyntheticBaseFilter() {
   filter.ComposeDirect(current, current, 2, DegToRad(5.0f), directR, directL);
   CHECK("synthetic direct composition preserves native pose",
         Near(ZAngleDeg(directR), 15.0f, 1e-3f));
+  for (int frame = 0; frame < 120; ++frame) {
+    Quat previousR = directR, previousL = directL;
+    filter.ComposeDirect(previousR, previousL, 2, DegToRad(5.0f), directR, directL);
+  }
+  CHECK("direct stop composition does not accumulate read-back rotation",
+        Near(ZAngleDeg(directR), 15.0f, 1e-3f));
+  current = QuatAxisAngle(2, DegToRad(30.0f));
+  filter.ComposeDirect(current, current, 2, DegToRad(5.0f), directR, directL);
+  CHECK("direct composition still follows a genuinely refreshed native pose",
+        Near(ZAngleDeg(directR), 35.0f, 1e-3f));
+  filter.ComposeDirect(directR, directL, 2, DegToRad(2.0f), directR, directL);
+  CHECK("direct stop changes the offset without adding the previous offset",
+        Near(ZAngleDeg(directR), 32.0f, 1e-3f));
 }
 
 // ---------- hot reload ----------
@@ -1358,13 +1372,37 @@ static void TestStopRelease() {
   zeroWeight.Observe("battle_skill_01", ClassifyClipNameFull("battle_skill_01"), 0.0f);
   state.Observe(run);
   state.Observe(zeroWeight);
-  CHECK("zero-weight clips do not cancel a visible stop", state.armed);
+  CHECK("zero weight cannot conceal an unsupported skill",
+        !state.armed && state.blocked);
   state.Observe(StopReleaseSample());
   CHECK("empty clip samples cancel the stop", !state.armed);
   state.Observe(stop);
   state = StopReleaseState();
   state.Observe(idle);
   CHECK("character reset or hot reload cannot retain a stop epoch", !state.armed);
+
+  const float unreliableWeights[] = {0.0f, -1.0f, 1e20f,
+      std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity()};
+  for (float weight : unreliableWeights) {
+    StopReleaseSample readableStop, readableIdle;
+    readableStop.Observe("A_actor_girl_run_stop_l",
+                        ClassifyClipNameFull("A_actor_girl_run_stop_l"), weight);
+    readableIdle.Observe("A_actor_girl_idle_loop",
+                        ClassifyClipNameFull("A_actor_girl_idle_loop"), weight);
+    state = StopReleaseState();
+    state.Observe(readableStop);
+    state.Observe(readableIdle);
+    CHECK("readable stop -> idle keeps its tail despite unreliable weights", state.armed);
+    GaitClipSelection selected;
+    selected.Observe(ClassifyClipNameFull("A_actor_yvonne_sprint_stop_l"), weight);
+    selected.Observe(ClassifyClipNameFull("unrecognized_pose"), 1.0f);
+    CHECK("unreliable weights cannot hide a known stop or authorize unknowns",
+          selected.classification.gait == GaitWalk &&
+              selected.classification.transitionToIdle);
+    selected.Observe(ClassifyClipNameFull("A_actor_girl_run_loop"), 0.8f);
+    CHECK("usable blend weights retain their selection priority",
+          selected.classification.gait == GaitRun);
+  }
 }
 
 static void TestFreqLock() {

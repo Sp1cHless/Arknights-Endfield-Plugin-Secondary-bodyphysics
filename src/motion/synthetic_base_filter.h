@@ -32,6 +32,12 @@ struct SyntheticBaseFilter {
   bool initialized = false;
   FrameGate gate;
 
+  bool ReadsOwnOutput(Quat currentR, Quat currentL) const {
+    return hasLastOut &&
+           fabsf(QuatDot(currentR, lastOutR)) > kSelfFeedbackDotEps &&
+           fabsf(QuatDot(currentL, lastOutL)) > kSelfFeedbackDotEps;
+  }
+
   void Reset() {
     baseR = QuatIdentity();
     baseL = QuatIdentity();
@@ -45,10 +51,7 @@ struct SyntheticBaseFilter {
   void Compose(Quat currentR, Quat currentL, int axis, float angleRad,
                float dt, Quat &outR, Quat &outL) {
     // Read-after-write detection (see file header).
-    const bool selfFeedback =
-        hasLastOut &&
-        fabsf(QuatDot(currentR, lastOutR)) > kSelfFeedbackDotEps &&
-        fabsf(QuatDot(currentL, lastOutL)) > kSelfFeedbackDotEps;
+    const bool selfFeedback = ReadsOwnOutput(currentR, currentL);
 
     if (!initialized) {
       baseR = currentR;
@@ -78,9 +81,19 @@ struct SyntheticBaseFilter {
 
   void ComposeDirect(Quat currentR, Quat currentL, int axis, float angleRad,
                      Quat &outR, Quat &outL) {
-    Reset();
+    // Stop/Jump composition follows fresh native poses immediately, but
+    // must retain output history so a read-back cannot stack the offset.
+    if (!initialized || !ReadsOwnOutput(currentR, currentL)) {
+      baseR = currentR;
+      baseL = currentL;
+      initialized = true;
+    }
+    gate = FrameGate();
     Quat dq = QuatAxisAngle(axis, angleRad);
-    outR = QuatMul(currentR, dq);
-    outL = QuatMul(currentL, dq);
+    outR = QuatMul(baseR, dq);
+    outL = QuatMul(baseL, dq);
+    lastOutR = outR;
+    lastOutL = outL;
+    hasLastOut = true;
   }
 };
