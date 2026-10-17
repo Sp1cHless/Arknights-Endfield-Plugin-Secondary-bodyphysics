@@ -446,9 +446,8 @@ require("GaitPhaseAlignEnabled" in gait_sampler and
         "active.synthetic.phaseRefValid = false" in gait_sampler,
         "phase-align switch must gate the PLL reference")
 synth_motion = text("src/motion/synthetic_motion.h")
-require("c.synthetic.freq.useHz" in synth_motion and
-        "GaitAutoFrequencyEnabled" in synth_motion,
-        "synthetic motion must consume the locked frequency")
+require("FreqLockTargetHz(c.synthetic.freq, GaitParamRef(p, gait), gait)" in synth_motion,
+        "synthetic motion must select the current gait's locked frequency")
 config_validator = text("src/config/config_validator.h")
 require("freqDevThreshold" in config_validator,
         "runtime validator must bound freq_dev_threshold")

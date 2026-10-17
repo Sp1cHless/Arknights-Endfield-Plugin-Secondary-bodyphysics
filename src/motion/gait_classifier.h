@@ -206,7 +206,8 @@ static GaitClassification ClassifyClipNameFull(
   // name heuristic.
   if (out.gait >= GaitWalk && out.gait <= GaitZipline &&
       !strstr(name, "start") && !strstr(name, "stop") &&
-      !strstr(name, "_to_") && !strstr(name, "jump"))
+      !strstr(name, "_to_") && !strstr(name, "jump") &&
+      !strstr(name, "pivot") && !strstr(name, "bump"))
     out.loopStable = true;
   return out;
 }

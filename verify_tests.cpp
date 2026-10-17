@@ -381,21 +381,37 @@ static void TestEnvelope() {
         !ClassifyClipNameFull("A_actor_lady_interact_zipline_start").loopStable);
   CHECK("idle loop not loop stable",
         !ClassifyClipNameFull("A_actor_girl_idle_loop").loopStable);
+  CHECK("walk pivot keeps gait but cannot drive loop timing",
+        ClassifyClipNameFull("walk_pivot_r").gait == GaitWalk &&
+        !ClassifyClipNameFull("walk_pivot_r").loopStable);
+  CHECK("run and sprint bumps cannot drive loop timing",
+        ClassifyClipNameFull("run_bump").gait == GaitRun &&
+        !ClassifyClipNameFull("run_bump").loopStable &&
+        ClassifyClipNameFull("sprint_bump").gait == GaitSprint &&
+        !ClassifyClipNameFull("sprint_bump").loopStable);
   // PLL phase tracking
   CHECK("wrap error shortest path forward",
         Near((float)WrapPhaseError(0.2, 1.0), 0.8f));
   CHECK("wrap error shortest path backward",
         Near((float)WrapPhaseError(0.2, 5.9), -0.583185307179586f));
   LocomotionEnvelope pll;
-  pll.SetPhaseTracking(true, 3.14159265358979);
-  for (int i = 0; i < 150; i++)
-    EnvAdvance(pll, 0.0f, 0.0f, 0.0f, false, 0.5f, 0.015f, 0.20f);
-  CHECK("PLL pulls toward ref without jump",
-        pll.Phase() > 0.8f && pll.Phase() < 3.2f);
+  pll.freqEnv = 2.0f;
+  const float replayDt = 1.0f / 60.0f;
+  double movingRef = 3.14159265358979;
+  bool cadenceBounded = true;
+  for (int i = 0; i < 720; i++) {
+    movingRef = fmod(movingRef + 6.28318530717959 * 2.0 * replayDt,
+                     6.28318530717959);
+    pll.SetPhaseTracking(true, movingRef);
+    double before = pll.phase;
+    pll.AdvanceDt(replayDt, 0.0f, 0.0f, 2.0f, false, 0.5f, 0.015f, 1.0f);
+    double hz = WrapPhaseError(before, pll.phase) / (6.28318530717959 * replayDt);
+    cadenceBounded &= hz >= 1.59999 && hz <= 2.40001;
+  }
+  CHECK("PLL never halves or doubles cadence while erasing half-cycle error",
+        cadenceBounded);
   CHECK("PLL stays in [0,2pi)", pll.Phase() >= 0.0f && pll.Phase() < 6.2832f);
-  for (int i = 0; i < 400; i++)
-    EnvAdvance(pll, 0.0f, 0.0f, 0.0f, false, 0.5f, 0.015f, 0.20f);
-  CHECK("PLL converges to ref", Near(pll.Phase(), 3.14159265358979f, 0.4f));
+  CHECK("PLL converges to moving ref", fabs(WrapPhaseError(pll.phase, movingRef)) < 0.03);
   LocomotionEnvelope freeEnv;
   freeEnv.SetPhaseTracking(false, 3.14159265358979);
   CHECK("no tracking disables PLL", !freeEnv.PhaseTrackingActive());
@@ -432,14 +448,21 @@ static void TestEnvelope() {
   // hold error = rate mismatch x tau forever (the frequency smoothing
   // regression).  The integral rate correction must absorb the mismatch.
   LocomotionEnvelope pllRate;
+  pllRate.freqEnv = 2.0f;
   pllRate.SetPhase(0.0);
-  pllRate.SetPhaseTracking(true, 0.0);  // static reference (rate 0)
-  for (int i = 0; i < 600; i++)
-    EnvAdvance(pllRate, 0.0f, 0.0f, 1.0f, false, 0.5f, 0.015f, 0.20f);
+  movingRef = 0.0;
+  for (int i = 0; i < 720; i++) {
+    movingRef = fmod(movingRef + 6.28318530717959 * 1.8 * replayDt,
+                     6.28318530717959);
+    pllRate.SetPhaseTracking(true, movingRef);
+    pllRate.AdvanceDt(replayDt, 0.0f, 0.0f, 2.0f, false, 0.5f, 0.015f, 1.0f);
+  }
   CHECK("PLL rate assist converges despite frequency mismatch",
-        fabs(WrapPhaseError(pllRate.Phase(), 0.0)) < 0.5);
+        fabs(WrapPhaseError(pllRate.phase, movingRef)) < 0.03);
   CHECK("PLL rate correction pulls toward the reference rate",
-        pllRate.phaseCorrHz <= kPhaseCorrMaxHz && pllRate.phaseCorrHz < -0.5);
+        fabs(pllRate.phaseCorrHz + 0.2) < 0.02);
+  CHECK("explicit interval rejects invalid frames",
+        !pllRate.AdvanceDt(0.0f, 0, 0, 2, false, .5f, .015f, 1));
   pllRate.SetPhaseTracking(false, 0.0);
   CHECK("tracking disengage clears the rate correction",
         pllRate.phaseCorrHz == 0.0);
@@ -1410,6 +1433,39 @@ static void TestFreqLock() {
   const char *clip = "run_loop";
   GaitParam gp;  // defaults: freq 1.0, autoFrequency on, threshold 0.05
   gp.frequencyHz = 2.0f;
+
+  // Regression: start clips previously borrowed the last gait's fitted Hz.
+  {
+    FreqCache cache;
+    cache.Put("chr_test", GaitSprint, 3.6f, 3.4f);
+    cache.Put("chr_test", GaitWalk, 1.85f, 2.0f);
+    FreqLockState f;
+    GaitParam sprint = gp;
+    sprint.frequencyHz = 3.4f;
+    FreqLockPrepare(f, sprint, GaitSprint, cache, "chr_test");
+    CHECK("sprint cache selected", Near(f.useHz, 3.6f));
+    CHECK("walk target rejects previous sprint fit before next sample",
+          Near(FreqLockTargetHz(f, gp, GaitWalk), 2.0f));
+    FreqLockPrepare(f, gp, GaitWalk, cache, "chr_test");
+    CHECK("walk start selects its own fit without measuring a loop",
+          Near(FreqLockTargetHz(f, gp, GaitWalk), 1.85f) && !f.measValid);
+    GaitParam off = gp;
+    off.autoFrequency = false;
+    CHECK("disabled auto frequency ignores fitted target",
+          Near(FreqLockTargetHz(f, off, GaitWalk), 2.0f));
+    FreqLockTick(f, gp, "walk_loop", .10f, 1000, GaitWalk, cache, "chr_test");
+    FreqLockTick(f, gp, "walk_loop", .15f, 1050, GaitWalk, cache, "chr_test");
+    FreqLockTick(f, gp, "walk_loop", .20f, 1100, GaitWalk, cache, "chr_test");
+    CHECK("loop timing established before pivot", f.measValid);
+    FreqLockPause(f);
+    CHECK("pivot clears timing baseline while retaining gait fit",
+          !f.havePrev && !f.measValid && !f.correcting && Near(f.useHz, 1.85f));
+    FreqLockTick(f, gp, "walk_loop", .40f, 3000, GaitWalk, cache, "chr_test");
+    CHECK("resumed loop does not measure across pivot gap", !f.measValid);
+    FreqLockTick(f, gp, "walk_loop", .45f, 3050, GaitWalk, cache, "chr_test");
+    FreqLockTick(f, gp, "walk_loop", .50f, 3100, GaitWalk, cache, "chr_test");
+    CHECK("resumed loop measures fresh deltas", f.measValid && Near(f.measHz, 2.0f));
+  }
 
   // measurement + matching config: no correction at all
   {

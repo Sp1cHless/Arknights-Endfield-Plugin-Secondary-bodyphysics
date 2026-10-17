@@ -105,6 +105,36 @@ struct FreqLockState {
   char lastClip[128] = {0};
 };
 
+static inline void FreqLockPause(FreqLockState &f) {
+  f.havePrev = false;
+  f.lastNorm = -1.0f;
+  f.lastNormMs = 0;
+  f.lastClip[0] = 0;
+  f.measValid = false;
+  f.correcting = false;
+  f.devCount = 0;
+}
+
+// Select the current gait before start/transition clips, without learning
+// their non-loop timing. Measurement and cache reuse are separate decisions.
+static inline void FreqLockPrepare(FreqLockState &f, const GaitParam &g,
+                                   int gait, FreqCache &cache,
+                                   const char *charId) {
+  if (f.lastGait == gait && f.cfgHz == g.frequencyHz) return;
+  f = FreqLockState();
+  f.lastGait = gait;
+  f.cfgHz = g.frequencyHz;
+  const float *cached = cache.FindForConfig(charId, gait, g.frequencyHz);
+  f.useHz = g.autoFrequency && cached ? *cached : g.frequencyHz;
+}
+
+static inline float FreqLockTargetHz(const FreqLockState &f,
+                                     const GaitParam &g, int gait) {
+  return g.autoFrequency && f.lastGait == gait && f.cfgHz == g.frequencyHz &&
+                 std::isfinite(f.useHz) && f.useHz > 0.0f
+             ? f.useHz : g.frequencyHz;
+}
+
 // One 20Hz sample.  `g` is the per-gait GaitParam of the current clip;
 // `clipName` change restarts measurement; `cache` holds the learned
 // (characterId, gait) frequencies so switches reuse them instead of falling
@@ -114,46 +144,21 @@ static inline void FreqLockTick(FreqLockState &f, const GaitParam &g,
                                 int gait, FreqCache &cache,
                                 const char *charId) {
   const float cfgHz = g.frequencyHz;
+  FreqLockPrepare(f, g, gait, cache, charId);
 
-  // clip switch -> restart measurement.  On a plain switch, reuse the cached
-  // fitted frequency for (character, gait) when available, else start from
-  // the config value.  A config change that happens to coincide with the
-  // switch (hot reload + clip change in the same sample window) is detected
-  // via the previous cfgHz — but ONLY within the same gait: a gait switch
-  // naturally changes the per-gait config frequency and must not be treated
-  // as a user config edit (that would discard the cached fit).
+  // A different clip or a paused measurement needs a fresh first sample.
+  // The cache validates its own config identity, including after hot reload.
   if (strcmp(f.lastClip, clipName) != 0) {
     snprintf(f.lastClip, sizeof(f.lastClip), "%s", clipName);
     f.havePrev = false;
     f.lastNorm = -1.0f;
     f.lastNormMs = 0;
-    const bool cfgChanged =
-        f.lastGait == gait && f.cfgHz > 0.0f && cfgHz != f.cfgHz;
-    f.lastGait = gait;
-    f.cfgHz = cfgHz;
-    if (cfgChanged) {
-      f.useHz = cfgHz;
-      cache.Invalidate(charId, gait);
-    } else {
-      const float *cached = cache.FindForConfig(charId, gait, cfgHz);
-      f.useHz = cached ? *cached : cfgHz;
-    }
+    const float *cached = cache.FindForConfig(charId, gait, cfgHz);
+    f.useHz = g.autoFrequency && cached ? *cached : cfgHz;
     f.measValid = false;
     f.correcting = false;
     f.devCount = 0;
     return;  // first sample of a clip: no delta yet
-  }
-
-  // config frequency is primary: a config change (hot reload / per-gait
-  // switch / user edit) restarts from the new config value and invalidates
-  // the cached fit — the user's manual input is authoritative and the cache
-  // re-learns from it
-  if (cfgHz != f.cfgHz) {
-    f.cfgHz = cfgHz;
-    f.useHz = cfgHz;
-    f.correcting = false;
-    f.devCount = 0;
-    cache.Invalidate(charId, gait);
   }
 
   // measurement: loop frequency from the normalizedTime delta (already

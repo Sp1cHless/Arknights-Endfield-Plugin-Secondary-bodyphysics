@@ -11,8 +11,8 @@
 
 static constexpr float kLocomotionOnsetAttackTauSec = 0.10f;
 
-// PLL phase tracking: convergence time constant (phase pulled toward the
-// clip-phase reference; 95% convergence in ~3x tau) and the amplitude below
+// PLL phase tracking: positional-pull time constant (total rate is bounded
+// below, so large errors can take longer to settle) and the amplitude below
 // which an initial hard snap is invisible (startup/character-switch align).
 static constexpr double kPhaseLockTauSec = 0.5;
 static constexpr float kPhaseSnapAmpThresholdRad = 0.02f;
@@ -30,6 +30,8 @@ static constexpr float kReleaseTailEpsRad = 0.01f;
 // smoothing setting; freqEnv remains the free-running (long-term) authority.
 static constexpr double kPhaseRateGainHzPerRad = 1.5;
 static constexpr double kPhaseCorrMaxHz = 1.5;
+// PLL may trim cadence, but may not halve/double it to erase phase error.
+static constexpr double kPhaseCorrMaxFraction = 0.20;
 
 // Shortest-path wrapped error to the reference in [-pi, pi).
 static inline double WrapPhaseError(double phase, double ref) {
@@ -96,8 +98,16 @@ struct LocomotionEnvelope {
   bool Advance(float ampTarget, float downTarget, float freqTarget,
                bool toIdle, float attackTauSec, float toIdleTauSec,
                float freqTauSec) {
-    float dt = gate.Tick();
-    if (dt <= 0.0) return false;
+    return AdvanceDt((float)gate.Tick(), ampTarget, downTarget, freqTarget,
+                     toIdle, attackTauSec, toIdleTauSec, freqTauSec);
+  }
+
+  // Same motion core with an explicit interval for deterministic replay.
+  bool AdvanceDt(float dt, float ampTarget, float downTarget, float freqTarget,
+                 bool toIdle, float attackTauSec, float toIdleTauSec,
+                 float freqTauSec) {
+    if (!std::isfinite(dt) || dt <= 0.0f) return false;
+    if (dt > 0.05f) dt = 0.05f;
     float ampTau = toIdle ? toIdleTauSec : attackTauSec;
     float kA = 1.0f - expf(-dt / ampTau);
     float kF = 1.0f - expf(-dt / freqTauSec);
@@ -106,22 +116,27 @@ struct LocomotionEnvelope {
     freqEnv += (freqTarget - freqEnv) * kF;
     phase += 2.0 * 3.14159265358979 * freqEnv * dt;
     if (phaseLockTauSec > 0.0) {
-      // Rate-assisted lock: integrate the wrapped error into a bounded
-      // auxiliary rate so a freqEnv that is still converging (large
-      // frequency_tau_sec) cannot hold the phase at a persistent offset.
-      phaseCorrHz += WrapPhaseError(phase, phaseRef) *
-                     (kPhaseRateGainHzPerRad * dt);
-      if (phaseCorrHz > kPhaseCorrMaxHz)
-        phaseCorrHz = kPhaseCorrMaxHz;
-      else if (phaseCorrHz < -kPhaseCorrMaxHz)
-        phaseCorrHz = -kPhaseCorrMaxHz;
-      phase += WrapPhaseError(phase, phaseRef) *
-                   (1.0 - exp(-dt / phaseLockTauSec)) +
-               6.28318530717959 * phaseCorrHz * dt;
+      const double error = WrapPhaseError(phase, phaseRef);
+      const double limit = fmin(kPhaseCorrMaxHz,
+                               fabs((double)freqEnv) * kPhaseCorrMaxFraction);
+      phaseCorrHz = fmax(-limit, fmin(limit, phaseCorrHz));
+      const double positionalHz = error * (1.0 - exp(-dt / phaseLockTauSec)) /
+                                  (6.28318530717959 * dt);
+      const double candidate = fmax(-limit, fmin(limit,
+          phaseCorrHz + error * kPhaseRateGainHzPerRad * dt));
+      const double requested = positionalHz + candidate;
+      // Do not wind up the integral while the same-direction request is
+      // saturated; allow it to unwind when it opposes the current error.
+      if (fabs(requested) <= limit || requested * error < 0.0)
+        phaseCorrHz = candidate;
+      const double correctionHz = fmax(-limit, fmin(limit,
+          positionalHz + phaseCorrHz));
+      phase += 6.28318530717959 * correctionHz * dt;
     } else {
       phaseCorrHz = 0.0;
     }
     phase = fmod(phase, 2.0 * 3.14159265358979);
+    if (phase < 0.0) phase += 2.0 * 3.14159265358979;
     return true;
   }
 

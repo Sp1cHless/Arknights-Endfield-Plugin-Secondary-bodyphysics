@@ -181,8 +181,8 @@ idle / walk / run / sprint / zipline
 与相位对齐相关的 Runtime 行为：
 
 - 相位映射按 `2 × 2π × normalizedTime`（`kLocomotionPhaseCyclesPerLoop = 2`）：一个完整动画 loop 产生两次物理振荡（每步一次），`normalizedTime` 每前进 0.5 即一个完整振荡周期。
-- **PLL 相位跟踪**：20Hz 采样在稳定 locomotion loop 上发布相位参考（`2 × 2π × norm + phase_offset_deg`）；振荡器相位保持连续积分，每帧以时间常数 `kPhaseLockTauSec = 0.5s` 向参考做**有界收敛**（最短路径，无硬跳变），并把相位误差积分到一个有界的辅助频率修正（`kPhaseCorrMaxHz = ±1.5Hz`）中——因此 `frequency_tau_sec` 调大后相位仍能快速贴合动画，不受频率平滑拖慢。步态切换时幅度/频率/相位三者各自平滑过渡。
-- 仅在 `loopStable` 的 clip（主 loop、zipline 巡索）上启用跟踪；`start`/`stop`/`_to_` 过渡 clip、jump clip、idle 无有效相位参考，跟踪关闭（相位自由积分）。
+- **PLL 相位跟踪**：20Hz 采样在稳定 locomotion loop 上发布相位参考（`2 × 2π × norm + phase_offset_deg`）；振荡器相位保持连续积分，以时间常数 `kPhaseLockTauSec = 0.5s` 向参考做最短路径牵引，并用积分项消除持续的速率偏差。位置牵引与积分项合计最多改变当前频率包络的 ±20%，同时保留 ±1.5Hz 的绝对上限；饱和时限制积分累积，避免为追相位产生半速或倍速晃动。较大的相位差会用更长时间平滑消除。
+- 仅在 `loopStable` 的 clip（主 loop、zipline 巡索）上启用跟踪和频率测量；`start`/`stop`/`_to_`、`pivot`/`bump`、jump、idle 不提供循环参考，跟踪关闭并清除测量基线，恢复 loop 后重新采样。开始移动时立即选择当前步态自己的有效缓存频率或配置值，不沿用上一种步态的拟合值；频率包络仍按 `frequency_tau_sec` 平滑变化。
 - 启动/切角色/idle→walk 等**幅度≈0** 时刻允许一次不可见的初始硬对齐（`kPhaseSnapAmpThresholdRad = 0.02`）；幅度非零的步态切换只走平滑牵引，绝不 snap。
 
 ### envelope

@@ -246,6 +246,7 @@ public:
       active.synthetic.stopRelease.armed = false;
       active.synthetic.stopRelease.blocked = true;
       active.synthetic.phaseRefValid = false;
+      FreqLockPause(active.synthetic.freq);
       PublishJumpLiveSignal(active, now, movement, false, false, false, false,
                             false);
       JumpPhaseAObserveReadFailure(active, cfg, now, readStatus, movement);
@@ -305,14 +306,18 @@ public:
     // _to_ transition clips and jump clips (loopStable=false) have no usable
     // locomotion phase and disable tracking.  The per-gait phase_align
     // switch disables the reference entirely (free integration).
-    const bool trackEligible =
-        bestLoopStable && active.profile && active.profile->enabled &&
+    const bool frequencyEligible =
+        active.profile && active.profile->enabled &&
         active.profile->motionMode == MotionMode::Synthetic &&
         IsPhaseAlignEligible(bestGait, transToIdle, active.jumpDetected);
+    if (frequencyEligible)
+      FreqLockPrepare(active.synthetic.freq, GaitParamRef(*active.profile, bestGait),
+                      bestGait, freqCache_, active.characterId);
+    const bool trackEligible = bestLoopStable && frequencyEligible;
     active.synthetic.phaseRefValid = false;
     if (trackEligible) {
       float norm = reader_.ReadNormalizedTime(callerAnimator);
-      if (norm >= 0.0f) {
+      if (std::isfinite(norm) && norm >= 0.0f) {
         // auto-frequency alignment runs regardless of the phase-align switch
         const GaitParam &gp = GaitParamRef(*active.profile, bestGait);
         FreqLockTick(active.synthetic.freq, gp, bestClipName, norm, now,
@@ -335,9 +340,12 @@ public:
         } else {
           active.synthetic.phaseRefValid = false;
         }
+      } else {
+        FreqLockPause(active.synthetic.freq);
       }
     } else {
       active.synthetic.phaseRefValid = false;
+      FreqLockPause(active.synthetic.freq);
     }
 
     PublishJumpLiveSignal(active, now, movement, true, jumpStart, landing,
