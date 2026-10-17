@@ -172,13 +172,24 @@ idle / walk / run / sprint / zipline
 
 - `amplitude_deg`：Up；
 - `amplitude_down_deg`：Down，缺失或 0 表示与 Up 对称；
-- `frequency_hz`：Hz。
+- `frequency_hz`：Hz；
+- `phase_offset_deg`：相位对齐偏移度数（0-180，缺失默认 0），在步态变化后的相位对齐时叠加到 clip 相位映射上。对称（左右交替）loop 的 run/sprint 通常取 180（反相）。
+- `phase_align`：布尔，默认 true。PLL 相位跟踪开关；false 时振荡器相位自由积分（不向 clip 相位收敛）。
+- `auto_frequency`：布尔，默认 true。自动频率对齐开关；false 时恒用 `frequency_hz`。
+- `freq_dev_threshold`：比例（0-1，默认 0.05 = 5%）。开启 `auto_frequency` 时，振荡器先使用配置 `frequency_hz`；实测动画 loop 频率与当前使用频率的偏差**连续 5 个 20Hz 采样**超过该阈值后，频率以每采样 20% 的有界速率向实测值校正，偏差降到阈值一半时冻结（滞回带）。实测物理频率 = `2 × 实测 loop 频率`（同 `kLocomotionPhaseCyclesPerLoop` 语义）。
+
+与相位对齐相关的 Runtime 行为：
+
+- 相位映射按 `2 × 2π × normalizedTime`（`kLocomotionPhaseCyclesPerLoop = 2`）：一个完整动画 loop 产生两次物理振荡（每步一次），`normalizedTime` 每前进 0.5 即一个完整振荡周期。
+- **PLL 相位跟踪**：20Hz 采样在稳定 locomotion loop 上发布相位参考（`2 × 2π × norm + phase_offset_deg`）；振荡器相位保持连续积分，每帧以时间常数 `kPhaseLockTauSec = 0.5s` 向参考做**有界收敛**（最短路径，无硬跳变），并把相位误差积分到一个有界的辅助频率修正（`kPhaseCorrMaxHz = ±1.5Hz`）中——因此 `frequency_tau_sec` 调大后相位仍能快速贴合动画，不受频率平滑拖慢。步态切换时幅度/频率/相位三者各自平滑过渡。
+- 仅在 `loopStable` 的 clip（主 loop、zipline 巡索）上启用跟踪；`start`/`stop`/`_to_` 过渡 clip、jump clip、idle 无有效相位参考，跟踪关闭（相位自由积分）。
+- 启动/切角色/idle→walk 等**幅度≈0** 时刻允许一次不可见的初始硬对齐（`kPhaseSnapAmpThresholdRad = 0.02`）；幅度非零的步态切换只走平滑牵引，绝不 snap。
 
 ### envelope
 
 - `amplitude_attack_tau_sec`：幅度进入/变化时间常数；
 - `frequency_tau_sec`：频率变化时间常数；
-- `to_idle_release_tau_sec`：明确 locomotion stop/to-idle 的释放时间常数。
+- `to_idle_release_tau_sec`：明确 locomotion stop/to-idle 的释放时间常数。**释放尾**：只有采样到已支持的 stop/to-idle 动画，才允许剩余振幅在后续已识别的 idle loop 中继续衰减，低于 `kReleaseTailEpsRad`（≈0.6°）后交还原生动画。直接从移动进入 idle 不启动释放尾；攻击、技能、跳跃、未知动画（包括与停止动画混合）或采样失败会取消释放尾，不能随后由 idle 恢复。释放全程**频率冻结在振荡器当前值**，只衰减幅度。
 
 ### jump
 
@@ -247,6 +258,8 @@ Runtime 约 250 ms 轮询 `runtime/config.json`。只有 revision 变化才尝�
 - runtime revision 为非负整数；
 - global interval 为正整数；
 - native factor >0；
+- `phase_align` / `auto_frequency` 类型必须为 boolean；
+- `freq_dev_threshold` 必须为 (0,1) 内的 finite 比例；
 - animation rules 数量和 gait 映射合法。
 
 ### amplitude / frequency / tau

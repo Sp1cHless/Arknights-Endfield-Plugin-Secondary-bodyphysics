@@ -9,6 +9,7 @@
 #include "../character/active_character.h"
 #include "../common/logger.h"
 #include "../config/config_types.h"
+#include "gait_classifier.h"
 #include "jump_controller.h"
 #include "locomotion_envelope.h"
 
@@ -19,12 +20,34 @@ struct SyntheticMotion {
   // Compute the output angle (radians, axis-sign applied) for this callback.
   // Advances envelope at most once per frame (multi-instance safe).
   float ComputeAngle(ActiveCharacterRuntime &c, const CharacterProfile &p) {
+    // PHASE TRACKING (PLL): feed the stable-loop clip phase reference to the
+    // envelope, which pulls its continuous phase toward it with a bounded
+    // rate each frame (no hard snap).  On fresh engagement with negligible
+    // amplitude (startup / character switch / idle->walk onset) an initial
+    // snap is invisible and aligns immediately; at non-zero amplitude
+    // (gait->gait switch) the pull converges smoothly instead.
+    const bool wasTracking = envelope.PhaseTrackingActive();
+    envelope.SetPhaseTracking(c.synthetic.phaseRefValid,
+                              c.synthetic.phaseRefRad);
+    if (c.synthetic.phaseRefValid && !wasTracking &&
+        envelope.Amplitude() < kPhaseSnapAmpThresholdRad &&
+        envelope.DownAmplitude() < kPhaseSnapAmpThresholdRad)
+      envelope.SetPhase(c.synthetic.phaseRefRad);
     int gait = c.currentGait;
     // baseline kGaitAmp is RADIANS; config stores degrees -> convert here
     bool validGait = gait >= GaitIdle && gait <= GaitZipline;
     float ampTarget = validGait ? DegToRad(GaitAmplitude(p, gait)) : 0.0f;
     float downTarget = validGait ? DegToRad(GaitDownAmplitude(p, gait)) : 0.0f;
     float freqTarget = validGait ? GaitFrequency(p, gait) : 1.5f;
+    // Auto-frequency alignment: when the per-gait switch is on, use the
+    // locked frequency.  useHz always holds a usable value (config, cached
+    // fitted frequency, or correction in flight), so the cached value is
+    // effective immediately after a clip/character switch — no wait for the
+    // measurement to re-arm.  useHz > 0 guards the pre-first-sample window
+    // (character just switched, no clip sampled yet).
+    if (validGait && GaitAutoFrequencyEnabled(p, gait) &&
+        c.synthetic.freq.useHz > 0.0f)
+      freqTarget = c.synthetic.freq.useHz;
 
     // Jump animations (any clip containing "jump", including landings) are
     // classified as Run and would write large run amplitudes during the
@@ -35,9 +58,27 @@ struct SyntheticMotion {
       downTarget = 0.0f;
     }
 
-    if (c.transitionToIdle) {
+    // Release tail: a stop must decay through the WHOLE stop window — the
+    // stop/_to_idle clip AND the following accepted idle-loop window —
+    // otherwise a slow to_idle_release_tau_sec truncates the motion
+    // mid-swing the moment the idle clip takes over.  (See also the
+    // matching write-gate bypass in MotionEngine::OnSyntheticCompute.)
+    const bool groundLoco = validGait && gait >= GaitWalk;
+    const bool releaseTail =
+        ReleaseTailActive(c.synthetic.stopRelease.armed, groundLoco,
+                          envelope.Amplitude(), envelope.DownAmplitude());
+    if (!c.transitionToIdle && !releaseTail)
+      c.synthetic.stopRelease.armed = false;
+    if (c.transitionToIdle || releaseTail) {
       ampTarget = 0.0f;   // to-idle fast release
       downTarget = 0.0f;
+      // Freeze the frequency at the oscillator's CURRENT value for the
+      // whole release.  The last gait's cadence is the motion the player
+      // saw; letting freqTarget follow the stop/idle/GaitNone clip
+      // classification (walk freq -> idle freq -> 1.5 default, plus
+      // per-gait auto-frequency fits) reads as a sudden frequency change
+      // mid-decay.  Amplitude decays to zero, frequency does not move.
+      freqTarget = envelope.Frequency();
     }
 
     bool groundMoving = IsGroundLocomotionOnsetEligible(
@@ -48,8 +89,8 @@ struct SyntheticMotion {
         c.synthetic.wasGroundLocomotionMoving,
         c.synthetic.locomotionOnsetActive);
 
-    envelope.Advance(ampTarget, downTarget, freqTarget, c.transitionToIdle,
-                     attackTau,
+    envelope.Advance(ampTarget, downTarget, freqTarget,
+                     c.transitionToIdle || releaseTail, attackTau,
                      p.envelope.toIdleReleaseTauSec,
                      p.envelope.frequencyTauSec);
 
@@ -76,6 +117,7 @@ struct SyntheticMotion {
     c.synthetic.downEnv = envelope.DownAmplitude();
     c.synthetic.freqEnv = envelope.Frequency();
     c.synthetic.phase = envelope.Phase();
+    c.synthetic.releaseTail = releaseTail;
     return angle;
   }
 

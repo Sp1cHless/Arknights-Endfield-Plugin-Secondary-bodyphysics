@@ -29,8 +29,7 @@
       "gait": {
         "run": {
           "amplitude_deg": 10.0,
-          "frequency_hz": 1.7
-        }
+          "frequency_hz": 1.7, "phase_offset_deg": 180 }
       },
       "jump": {
         "enabled": true,
@@ -362,8 +361,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 12, "amplitude_down_deg": 12, "frequency_hz": 1.7 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 2.7 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.4 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 2.7, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.4, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {

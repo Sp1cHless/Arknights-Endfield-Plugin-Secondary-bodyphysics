@@ -9,8 +9,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
-        "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
-        "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 },
+        "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -28,8 +28,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
-        "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
-        "sprint": { "amplitude_deg": 12, "frequency_hz": 2 },
+        "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 12, "frequency_hz": 2, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 8.5, "frequency_hz": 1.7 }
       },
       "envelope": {
@@ -47,8 +47,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 1.8 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 25, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 35, "amplitude_down_deg": 35, "frequency_hz": 3.7 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 25, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 35, "amplitude_down_deg": 35, "frequency_hz": 3.7, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 4 }
       },
       "envelope": {
@@ -66,8 +66,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 25, "amplitude_down_deg": 25, "frequency_hz": 1.84 },
-        "run": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 2.24 },
-        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 40, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 2.24, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 40, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 25, "amplitude_down_deg": 25, "frequency_hz": 3 }
       },
       "envelope": {
@@ -85,8 +85,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 50, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 50, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -104,8 +104,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 3 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 2.7 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.4 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 2.7, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.4, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -122,8 +122,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 20, "frequency_hz": 2.1 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 30, "frequency_hz": 2.98 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 40, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 30, "frequency_hz": 2.98, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 40, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 3 }
       },
       "envelope": {
@@ -140,8 +140,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 40, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 40, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3 }
       },
       "envelope": {
@@ -158,8 +158,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 35, "frequency_hz": 3.71 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 40, "amplitude_down_deg": 35, "frequency_hz": 3.71, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 15, "frequency_hz": 3 }
       },
       "envelope": {
@@ -177,8 +177,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 12, "amplitude_down_deg": 15, "frequency_hz": 2 },
-        "run": { "amplitude_deg": 25, "amplitude_down_deg": 30, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 35, "amplitude_down_deg": 40, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 25, "amplitude_down_deg": 30, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 35, "amplitude_down_deg": 40, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -196,8 +196,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 1.8 },
-        "run": { "amplitude_deg": 25, "amplitude_down_deg": 20, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 25, "amplitude_down_deg": 20, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 3 }
       },
       "envelope": {
@@ -215,8 +215,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 25, "amplitude_down_deg": 25, "frequency_hz": 3.1 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.68 },
+        "run": { "amplitude_deg": 25, "amplitude_down_deg": 25, "frequency_hz": 3.1, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.68, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 3 }
       },
       "envelope": {
@@ -234,8 +234,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 15, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 40, "frequency_hz": 2.7 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 45, "frequency_hz": 3.4 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 40, "frequency_hz": 2.7, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 45, "frequency_hz": 3.4, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -253,8 +253,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 12, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 25, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.7 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 25, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.7, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -272,8 +272,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 15, "frequency_hz": 1.8 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 25, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.7 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 25, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.7, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -291,8 +291,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 18, "amplitude_down_deg": 15, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 15, "frequency_hz": 3 }
       },
       "envelope": {
@@ -310,8 +310,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 8.5, "frequency_hz": 3 }
       },
       "envelope": {
@@ -329,8 +329,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 15, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 25, "amplitude_down_deg": 25, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 35, "amplitude_down_deg": 35, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 25, "amplitude_down_deg": 25, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 35, "amplitude_down_deg": 35, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 10, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {
@@ -348,8 +348,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 10, "amplitude_down_deg": 15, "frequency_hz": 1.86 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 3, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.72, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 8.5, "frequency_hz": 3 }
       },
       "envelope": {
@@ -367,8 +367,8 @@
       "gait": {
         "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
         "walk": { "amplitude_deg": 12, "amplitude_down_deg": 12, "frequency_hz": 1.7 },
-        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 2.7 },
-        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.4 },
+        "run": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 2.7, "phase_offset_deg": 180 },
+        "sprint": { "amplitude_deg": 30, "amplitude_down_deg": 30, "frequency_hz": 3.4, "phase_offset_deg": 180 },
         "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 10, "frequency_hz": 3 }
       },
       "envelope": {

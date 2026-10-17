@@ -5,7 +5,9 @@
 #include <cstring>
 #include "../common/logger.h"
 #include "../config/config_loader.h"  // ConfigSnapshot (profile binding)
+#include "../motion/freq_lock.h"
 #include "../motion/jump_live_signal.h"
+#include "../motion/locomotion_release.h"
 #include "../motion/synthetic_base_filter.h"
 #include "bone_resolver.h"
 #include "character_identity.h"
@@ -18,6 +20,20 @@ struct SyntheticRuntime {
   double lastAdvanceTime = 0.0;
   bool wasGroundLocomotionMoving = false;
   bool locomotionOnsetActive = false;
+  // Phase-tracking handshake (PLL): the 20Hz sampling layer publishes the
+  // stable-loop clip's phase (phaseRefRad) + validity (phaseRefValid) on
+  // every accepted-locomotion sample; SyntheticMotion feeds them to the
+  // envelope each frame, which pulls its continuous phase toward the ref
+  // with a bounded rate (no hard snap except at negligible amplitude).
+  bool phaseRefValid = false;
+  double phaseRefRad = 0.0;  // tracking target = 2pi*cycles*2*norm + offset
+  // Auto-frequency alignment (20Hz sampling layer): measured loop frequency
+  // (physical = 2x loop, same semantics as config frequency_hz) + a
+  // deviation-triggered lock that starts from the CONFIG frequency and only
+  // corrects toward the measurement when |dev| stays above the per-gait
+  // threshold for several samples (hysteresis).  Pure logic lives in
+  // motion/freq_lock.h so verify_tests can unit-test it.
+  FreqLockState freq;
   float outAngleRad = 0.0f;
   Quat lastNativeR = QuatIdentity();
   Quat lastNativeL = QuatIdentity();
@@ -25,6 +41,10 @@ struct SyntheticRuntime {
   Quat targetR = QuatIdentity();
   Quat targetL = QuatIdentity();
   bool targetValid = false;
+  StopReleaseState stopRelease;
+  // Release-tail write-through flag for the engine's synthetic write gate
+  // (derived fresh by SyntheticMotion every frame; never persists).
+  bool releaseTail = false;
 };
 
 struct JumpRuntime {

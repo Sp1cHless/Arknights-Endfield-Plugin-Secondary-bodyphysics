@@ -31,6 +31,10 @@
 
 SecondaryMotion/build/
 SecondaryMotion/bin/
+SecondaryMotion/plugin/*.dll
+SecondaryMotion/SecondaryMotion.Manager.dll
+SecondaryMotion/SecondaryMotion.Manager.exe
+SecondaryMotion/SecondaryMotion.Manager.pdb
 
 **/CMakeFiles/
 **/CMakeCache.txt
@@ -115,3 +119,8 @@ artifacts/
 Thumbs.db
 Desktop.ini
 .DS_Store
+# ------------------------------------------------------------
+# Local codegraph index (never commit)
+# ------------------------------------------------------------
+
+.codegraph/

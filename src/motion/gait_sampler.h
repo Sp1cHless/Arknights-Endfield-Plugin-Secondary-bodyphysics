@@ -14,6 +14,7 @@
 #include "../diagnostics/jump_phase_a_probe.h"
 #include "../diagnostics/movement_signal_probe.h"
 #include "../il2cpp/animator_clip_reader.h"
+#include "freq_lock.h"
 #include "gait_classifier.h"
 
 static JumpPhaseAObservation JumpPhaseABaseObservation(
@@ -60,18 +61,6 @@ static bool PhaseDEntityAnimatorPairValid(
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     return false;
   }
-}
-
-// A clip whose name marks an attack/skill (e.g. battle_air_atk_*,
-// battle_attack_*, *_skill_*, combo_skill_air) never resolves in a landing
-// tail, so a jump that resolves into one must not keep the inertial epoch
-// armed.  Detected from the deterministic clip name (not physics), so it is
-// impervious to terrain, mid-air re-jumps and enemy knockback.
-static bool IsAttackClip(const char *name) {
-  if (!name) return false;
-  return strstr(name, "attack") || strstr(name, "atk") ||
-         strstr(name, "skill") || strstr(name, "combo") ||
-         strstr(name, "ult") || strstr(name, "_air_");
 }
 
 static void PublishJumpLiveSignal(ActiveCharacterRuntime &active, DWORD now,
@@ -126,6 +115,9 @@ static void JumpPhaseAObserveClips(
   g_jumpPhaseATimeline.Observe(observation);
 }
 
+// ---- auto-frequency alignment ----  pure logic + state live in
+// motion/freq_lock.h (unit-testable); the 20Hz sampling layer below only
+// feeds it the per-gait params, the clip name, normalizedTime and now.
 class GaitSampler {
 public:
   GaitSampler(AnimatorClipReader &reader) : reader_(reader) {}
@@ -219,6 +211,9 @@ public:
       movement = g_movementSignalProbe.Sample(g_mainCharEntity, identityValid);
     }
     if (!reader_.ReadLayer0(callerAnimator, clips, 8, count, &readStatus)) {
+      active.synthetic.stopRelease.armed = false;
+      active.synthetic.stopRelease.blocked = true;
+      active.synthetic.phaseRefValid = false;
       PublishJumpLiveSignal(active, now, movement, false, false, false, false,
                             false);
       JumpPhaseAObserveReadFailure(active, cfg, now, readStatus, movement);
@@ -232,13 +227,19 @@ public:
     bool jumpStart = false;
     bool attackActive = false;
     bool ziplineActive = false;
+    bool bestLoopStable = false;
+    char bestClipName[128] = {0};
+    StopReleaseSample releaseSample;
     active.jumpDetected = false;  // recomputed every sample
     for (size_t i = 0; i < count; i++) {
       GaitClassification cls =
           ClassifyClipNameFull(clips[i].name, active.profile);
+      releaseSample.Observe(clips[i].name, cls, clips[i].weight);
       if (cls.gait >= GaitIdle && clips[i].weight > bestW) {
         bestW = clips[i].weight;
         bestGait = cls.gait;
+        bestLoopStable = cls.loopStable;
+        snprintf(bestClipName, sizeof(bestClipName), "%s", clips[i].name);
       }
       if (cls.transitionToIdle) transToIdle = true;
       if (cls.landingDetected) landing = true;
@@ -251,6 +252,51 @@ public:
     active.currentGait = bestGait;
     active.transitionToIdle = transToIdle;
     active.jumpActive = landing;
+    active.synthetic.stopRelease.Observe(releaseSample);
+
+    // PHASE TRACKING (PLL): publish the stable-loop clip's real phase
+    // (m_NormalizedTime, 2x symmetric-loop mapping + per-gait config offset)
+    // as a bounded tracking target.  The envelope pulls its continuous phase
+    // toward this reference every frame (no hard snap), so amplitude /
+    // frequency / phase all transition smoothly between gaits.  start/stop/
+    // _to_ transition clips and jump clips (loopStable=false) have no usable
+    // locomotion phase and disable tracking.  The per-gait phase_align
+    // switch disables the reference entirely (free integration).
+    const bool trackEligible =
+        bestLoopStable && active.profile && active.profile->enabled &&
+        active.profile->motionMode == MotionMode::Synthetic &&
+        IsPhaseAlignEligible(bestGait, transToIdle, active.jumpDetected);
+    active.synthetic.phaseRefValid = false;
+    if (trackEligible) {
+      float norm = reader_.ReadNormalizedTime(callerAnimator);
+      if (norm >= 0.0f) {
+        // auto-frequency alignment runs regardless of the phase-align switch
+        const GaitParam &gp = GaitParamRef(*active.profile, bestGait);
+        FreqLockTick(active.synthetic.freq, gp, bestClipName, norm, now,
+                     bestGait, freqCache_, active.characterId);
+        static DWORD s_freqLogT = 0;
+        if (RateLimit(s_freqLogT, 2000) && active.synthetic.freq.measValid)
+          ProbeLog("[FREQ] gait=%d cfg=%.2f meas=%.2f use=%.2f%s\n",
+                   bestGait, gp.frequencyHz, active.synthetic.freq.measHz,
+                   active.synthetic.freq.useHz,
+                   active.synthetic.freq.correcting ? " (correcting)" : "");
+        if (GaitPhaseAlignEnabled(*active.profile, bestGait)) {
+          active.synthetic.phaseRefRad = ApplyGaitPhaseOffset(
+              PhaseFromNormalizedTime(norm, kLocomotionPhaseCyclesPerLoop),
+              GaitPhaseOffsetDeg(*active.profile, bestGait));
+          active.synthetic.phaseRefValid = true;
+          static DWORD s_phaseLogT = 0;
+          if (RateLimit(s_phaseLogT, 2000))
+            ProbeLog("[PHASE] track gait=%d norm=%.3f ref=%.1fdeg\n", bestGait,
+                     norm, RadToDeg((float)active.synthetic.phaseRefRad));
+        } else {
+          active.synthetic.phaseRefValid = false;
+        }
+      }
+    } else {
+      active.synthetic.phaseRefValid = false;
+    }
+
     PublishJumpLiveSignal(active, now, movement, true, jumpStart, landing,
                           attackActive, ziplineActive);
     JumpPhaseAObserveClips(active, cfg, now, readStatus, clips, count,
@@ -318,4 +364,8 @@ private:
   }
 
   AnimatorClipReader &reader_;
+  // Session-level fitted-frequency cache (learned per character+gait).
+  // Fixed-size, zero allocation; survives character switches so re-entering
+  // a character reuses its fitted frequency instead of re-learning it.
+  FreqCache freqCache_;
 };

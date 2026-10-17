@@ -60,6 +60,30 @@ public class CharacterItem : ViewModelBase {
     public double SprintFreq { get => Data.Freq[3]; set { Data.Freq[3] = value; LogEdit("SprintFreq", value); OnPropertyChanged(); } }
     public double ZiplineFreq { get => Data.Freq[4]; set { Data.Freq[4] = value; LogEdit("ZiplineFreq", value); OnPropertyChanged(); } }
 
+    // per-gait phase alignment offset (deg, 0-180)
+    public double WalkPhaseOffset { get => Data.PhaseOffset[1]; set { Data.PhaseOffset[1] = value; LogEdit("WalkPhaseOffset", value); OnPropertyChanged(); } }
+    public double RunPhaseOffset { get => Data.PhaseOffset[2]; set { Data.PhaseOffset[2] = value; LogEdit("RunPhaseOffset", value); OnPropertyChanged(); } }
+    public double SprintPhaseOffset { get => Data.PhaseOffset[3]; set { Data.PhaseOffset[3] = value; LogEdit("SprintPhaseOffset", value); OnPropertyChanged(); } }
+    public double ZiplinePhaseOffset { get => Data.PhaseOffset[4]; set { Data.PhaseOffset[4] = value; LogEdit("ZiplinePhaseOffset", value); OnPropertyChanged(); } }
+
+    // per-gait phase alignment switch (PLL tracking on/off)
+    public bool WalkPhaseAlign { get => Data.PhaseAlign[1]; set { Data.PhaseAlign[1] = value; LogEdit("WalkPhaseAlign", value); OnPropertyChanged(); } }
+    public bool RunPhaseAlign { get => Data.PhaseAlign[2]; set { Data.PhaseAlign[2] = value; LogEdit("RunPhaseAlign", value); OnPropertyChanged(); } }
+    public bool SprintPhaseAlign { get => Data.PhaseAlign[3]; set { Data.PhaseAlign[3] = value; LogEdit("SprintPhaseAlign", value); OnPropertyChanged(); } }
+    public bool ZiplinePhaseAlign { get => Data.PhaseAlign[4]; set { Data.PhaseAlign[4] = value; LogEdit("ZiplinePhaseAlign", value); OnPropertyChanged(); } }
+
+    // per-gait auto frequency alignment switch
+    public bool WalkAutoFreq { get => Data.AutoFreq[1]; set { Data.AutoFreq[1] = value; LogEdit("WalkAutoFreq", value); OnPropertyChanged(); } }
+    public bool RunAutoFreq { get => Data.AutoFreq[2]; set { Data.AutoFreq[2] = value; LogEdit("RunAutoFreq", value); OnPropertyChanged(); } }
+    public bool SprintAutoFreq { get => Data.AutoFreq[3]; set { Data.AutoFreq[3] = value; LogEdit("SprintAutoFreq", value); OnPropertyChanged(); } }
+    public bool ZiplineAutoFreq { get => Data.AutoFreq[4]; set { Data.AutoFreq[4] = value; LogEdit("ZiplineAutoFreq", value); OnPropertyChanged(); } }
+
+    // per-gait frequency deviation threshold (percent in UI, fraction in storage)
+    public double WalkFreqDevThreshold { get => Data.FreqDevThreshold[1] * 100.0; set { Data.FreqDevThreshold[1] = value / 100.0; LogEdit("WalkFreqDevThreshold", Data.FreqDevThreshold[1]); OnPropertyChanged(); } }
+    public double RunFreqDevThreshold { get => Data.FreqDevThreshold[2] * 100.0; set { Data.FreqDevThreshold[2] = value / 100.0; LogEdit("RunFreqDevThreshold", Data.FreqDevThreshold[2]); OnPropertyChanged(); } }
+    public double SprintFreqDevThreshold { get => Data.FreqDevThreshold[3] * 100.0; set { Data.FreqDevThreshold[3] = value / 100.0; LogEdit("SprintFreqDevThreshold", Data.FreqDevThreshold[3]); OnPropertyChanged(); } }
+    public double ZiplineFreqDevThreshold { get => Data.FreqDevThreshold[4] * 100.0; set { Data.FreqDevThreshold[4] = value / 100.0; LogEdit("ZiplineFreqDevThreshold", Data.FreqDevThreshold[4]); OnPropertyChanged(); } }
+
     public int AxisIndex {
         get => Data.Axis.Length == 0 ? 0 : Array.IndexOf(new[] { "X", "Y", "Z" }, Data.Axis) + 1;
         set {

@@ -11,6 +11,10 @@ public class CharacterData {
     public double[] Amp = { 0, 3.6, 8.5, 12, 8.5 };       // up amplitude (idx4=zipline)
     public double[] AmpDown = { 0, 0, 0, 0, 0 };          // 0 = symmetric (=up)
     public double[] Freq = { 1.2, 1.5, 1.7, 2.0, 1.7 };
+    public double[] PhaseOffset = { 0, 0, 0, 0, 0 };         // phase align offset (deg, 0-180)
+    public bool[] PhaseAlign = { true, true, true, true, true };   // PLL phase tracking per gait
+    public bool[] AutoFreq = { true, true, true, true, true };     // auto frequency alignment per gait
+    public double[] FreqDevThreshold = { 0.05, 0.05, 0.05, 0.05, 0.05 }; // dev threshold (fraction) per gait
     public double EnvAttack = 0.15, EnvFreq = 0.20, EnvIdle = 0.015;
     public double NativeFactor = 2.0;
     public bool JumpEnabled = false;

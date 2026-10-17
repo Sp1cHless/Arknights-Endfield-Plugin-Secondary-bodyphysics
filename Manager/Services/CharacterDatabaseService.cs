@@ -79,6 +79,10 @@ public class CharacterDatabaseService {
             c.Amp[i] = JsonMini.GetNum(g, "amplitude_deg", c.Amp[i]);
             c.AmpDown[i] = JsonMini.GetNum(g, "amplitude_down_deg", 0.0);
             c.Freq[i] = JsonMini.GetNum(g, "frequency_hz", c.Freq[i]);
+            c.PhaseOffset[i] = JsonMini.GetNum(g, "phase_offset_deg", c.PhaseOffset[i]);
+            c.PhaseAlign[i] = JsonMini.GetBool(g, "phase_align", c.PhaseAlign[i]);
+            c.AutoFreq[i] = JsonMini.GetBool(g, "auto_frequency", c.AutoFreq[i]);
+            c.FreqDevThreshold[i] = JsonMini.GetNum(g, "freq_dev_threshold", c.FreqDevThreshold[i]);
         }
     }
 
@@ -115,14 +119,28 @@ public class CharacterDatabaseService {
             ", \"landing_impulse_gain\": " + JsonMini.Num(c.JumpLandingImpulseGain) + " }";
     }
 
-    // Serialize one gait entry (used by preset + DB writers).
-    public static string GaitEntryJson(string name, double amp, double down, double freq) {
+    // Serialize one gait entry (used by preset + DB writers).  Only
+    // non-default values are emitted (absent = default), keeping files lean
+    // and older runtimes backward compatible.
+    public static string GaitEntryJson(string name, double amp, double down, double freq,
+                                       double phaseOffset = 0.0,
+                                       bool phaseAlign = true, bool autoFreq = true,
+                                       double freqDevThreshold = 0.05) {
         var sb = new StringBuilder();
         sb.Append(JsonMini.Str(name))
           .Append(": { \"amplitude_deg\": ").Append(JsonMini.Num(amp));
         if (down > 0)
             sb.Append(", \"amplitude_down_deg\": ").Append(JsonMini.Num(down));
-        sb.Append(", \"frequency_hz\": ").Append(JsonMini.Num(freq)).Append(" }");
+        sb.Append(", \"frequency_hz\": ").Append(JsonMini.Num(freq));
+        if (phaseOffset != 0.0)
+            sb.Append(", \"phase_offset_deg\": ").Append(JsonMini.Num(phaseOffset));
+        if (!phaseAlign)
+            sb.Append(", \"phase_align\": false");
+        if (!autoFreq)
+            sb.Append(", \"auto_frequency\": false");
+        if (freqDevThreshold != 0.05)
+            sb.Append(", \"freq_dev_threshold\": ").Append(JsonMini.Num(freqDevThreshold));
+        sb.Append(" }");
         return sb.ToString();
     }
 
@@ -199,6 +217,10 @@ public class CharacterDatabaseService {
             g["amplitude_deg"] = c.Amp[i];
             if (c.AmpDown[i] > 0) g["amplitude_down_deg"] = c.AmpDown[i];
             g["frequency_hz"] = c.Freq[i];
+            g["phase_offset_deg"] = c.PhaseOffset[i];
+            g["phase_align"] = c.PhaseAlign[i];
+            g["auto_frequency"] = c.AutoFreq[i];
+            g["freq_dev_threshold"] = c.FreqDevThreshold[i];
             gait[gnames[i]] = g;
         }
         defaults["gait"] = gait;
@@ -318,7 +340,11 @@ public class CharacterDatabaseService {
                 gnames2[i],
                 JsonMini.GetNum(g, "amplitude_deg", 0),
                 JsonMini.GetNum(g, "amplitude_down_deg", 0),
-                JsonMini.GetNum(g, "frequency_hz", 1.5)));
+                JsonMini.GetNum(g, "frequency_hz", 1.5),
+                JsonMini.GetNum(g, "phase_offset_deg", 0),
+                JsonMini.GetBool(g, "phase_align", true),
+                JsonMini.GetBool(g, "auto_frequency", true),
+                JsonMini.GetNum(g, "freq_dev_threshold", 0.05)));
             wroteGait = true;
         }
         sb.Append("\r\n");

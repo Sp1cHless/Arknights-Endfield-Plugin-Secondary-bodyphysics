@@ -22,6 +22,13 @@
     <sys:String x:Key="C_env_to_idle_tau_clips_containing_quo">Env to-idle tau — clips containing &amp;quot;stop&amp;quot; or &amp;quot;_to_idle&amp;quot;</sys:String>
     <sys:String x:Key="C_env_to_idle_tau_dedicated_stop_tail_">Env to-idle tau — dedicated stop/tail smoothing. Triggered when the clip name contains &amp;quot;stop&amp;quot; or &amp;quot;_to_idle&amp;quot;.</sys:String>
     <sys:String x:Key="C_frequency_hz">晃动频率 (Hz)</sys:String>
+    <sys:String x:Key="C_phase_offset_deg">相位偏移 (°)</sys:String>
+    <sys:String x:Key="C_phase_align">相位对齐</sys:String>
+    <sys:String x:Key="C_phase_align_syncs_the_oscillator_pha">相位对齐 — 将振荡器相位与移动动画同步(PLL)。关闭 = 自由积分相位。</sys:String>
+    <sys:String x:Key="C_auto_freq">自动频率</sys:String>
+    <sys:String x:Key="C_auto_freq_starts_from_the_config_fr">自动频率 — 先使用配置频率;当与实测动画循环频率偏差持续超过阈值时,校正到匹配。</sys:String>
+    <sys:String x:Key="C_freq_dev_threshold">偏差阈值 (%)</sys:String>
+    <sys:String x:Key="C_freq_dev_threshold_deviation_abov">偏差阈值 — 频率偏差超过该百分比时向实测动画循环频率校正。</sys:String>
     <sys:String x:Key="C_frequency_smoothing">过渡频率平滑</sys:String>
     <sys:String x:Key="C_gait">动作</sys:String>
     <sys:String x:Key="C_higher_slower_frequency_changes_lowe">数值越高，频率变化越平滑 · 数值越低，频率变化越快</sys:String>
@@ -97,6 +104,10 @@
     <sys:String x:Key="M_env_to_idle_tau_dedicated_stop_tail_">Env to-idle tau — dedicated stop/tail smoothing. Triggered when the clip name contains &amp;quot;stop&amp;quot; or &amp;quot;_to_idle&amp;quot;.</sys:String>
     <sys:String x:Key="M_for_motions_to_stop_higher_gentler_s">越高 = 更平滑的过渡，停止更慢 · 越低 = 更快的停止</sys:String>
     <sys:String x:Key="M_frequency_hz">晃动频率 (Hz)</sys:String>
+    <sys:String x:Key="M_phase_offset_deg">相位偏移 (°)</sys:String>
+    <sys:String x:Key="M_phase_align">相位对齐</sys:String>
+    <sys:String x:Key="M_auto_freq">自动频率</sys:String>
+    <sys:String x:Key="M_freq_dev_threshold">偏差阈值 (%)</sys:String>
     <sys:String x:Key="M_frequency_smoothing">频率变化平滑</sys:String>
     <sys:String x:Key="M_gait">运动数据</sys:String>
     <sys:String x:Key="M_game">游戏状态</sys:String>

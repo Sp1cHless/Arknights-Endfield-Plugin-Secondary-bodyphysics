@@ -411,6 +411,48 @@ for field in JUMP_MODEL_FIELDS:
             field == "JumpEnabled" and "data.JumpEnabled = aurora.JumpEnabled" in developer_vm,
             "Developer new-character template missing " + field)
 
+# Per-gait phase-align / auto-frequency switches and the deviation threshold
+# must round-trip through the shared gait serializer, bind on both pages, and
+# stay optional in JSON (absent = default on, backward compatible).
+for field, key in [("PhaseAlign", "phase_align"), ("AutoFreq", "auto_frequency")]:
+    require(field in model, "CharacterData missing " + field)
+    for gait in ["Walk", "Run", "Sprint", "Zipline"]:
+        require(gait + field in wrapper, "CharacterItem missing " + gait + field)
+        require("Current." + gait + field in main_xaml,
+                "Main page missing binding " + gait + field)
+        require("Selected." + gait + field in characters_xaml,
+                "Characters page missing binding " + gait + field)
+require('"phase_align"' in db_service and '"auto_frequency"' in db_service and
+        '"freq_dev_threshold"' in db_service,
+        "shared gait round-trip missing new keys")
+for gait in ["Walk", "Run", "Sprint", "Zipline"]:
+    require("Current." + gait + "FreqDevThreshold" in main_xaml,
+            "Main page missing dev-threshold binding " + gait)
+    require("Selected." + gait + "FreqDevThreshold" in characters_xaml,
+            "Characters page missing dev-threshold binding " + gait)
+require("phaseAlign" in config_types and "autoFrequency" in config_types and
+        "freqDevThreshold" in config_types,
+        "GaitParam missing new runtime fields")
+require('"phase_align"' in loader and '"auto_frequency"' in loader and
+        '"freq_dev_threshold"' in loader,
+        "runtime loader must parse the new gait keys")
+freq_lock = text("src/motion/freq_lock.h")
+require("FreqLockTick" in freq_lock and "kFreqDevSamples" in freq_lock and
+        "kFreqCorrectionStep" in freq_lock and "kFreqEmaAlpha" in freq_lock,
+        "freq_lock.h missing the frequency lock primitives")
+require("FreqLockTick(active.synthetic.freq" in gait_sampler,
+        "gait sampler must feed the 20Hz sample into the frequency lock")
+require("GaitPhaseAlignEnabled" in gait_sampler and
+        "active.synthetic.phaseRefValid = false" in gait_sampler,
+        "phase-align switch must gate the PLL reference")
+synth_motion = text("src/motion/synthetic_motion.h")
+require("c.synthetic.freq.useHz" in synth_motion and
+        "GaitAutoFrequencyEnabled" in synth_motion,
+        "synthetic motion must consume the locked frequency")
+config_validator = text("src/config/config_validator.h")
+require("freqDevThreshold" in config_validator,
+        "runtime validator must bound freq_dev_threshold")
+
 for rel in ["SecondaryMotion/data/characters.default.json",
             "SecondaryMotion/presets/Default.json",
             "SecondaryMotion/presets/Set1.json",

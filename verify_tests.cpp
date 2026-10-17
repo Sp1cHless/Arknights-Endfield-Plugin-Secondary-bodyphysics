@@ -11,7 +11,9 @@
 #include "src/config/config_loader.h"
 #include "src/config/config_validator.h"
 #include "src/motion/gait_classifier.h"
+#include "src/motion/freq_lock.h"
 #include "src/motion/locomotion_envelope.h"
+#include "src/motion/locomotion_release.h"
 #include "src/motion/synthetic_base_filter.h"
 #include "src/motion/jump_inertial_source.h"
 #include "src/runtime/dev_command.h"
@@ -303,6 +305,143 @@ static void TestEnvelope() {
   for (int i = 0; i < 300; i++)
     EnvAdvance(env3, target, downT, 1.7f, false, 0.15f, 0.015f, 0.20f);
   CHECK("down amp converges separately", Near(env3.DownAmplitude(), downT, 1e-3f));
+  // phase anchor (mechanism-A fix)
+  LocomotionEnvelope envA;
+  envA.SetPhase(1.0);
+  EnvAdvance(envA, 0.0f, 0.0f, 1.7f, false, 0.15f, 0.015f, 0.20f);  // prime gate
+  EnvAdvance(envA, 0.0f, 0.0f, 1.7f, false, 0.15f, 0.015f, 0.20f);  // advance
+  CHECK("SetPhase anchors then advances from the anchor",
+        envA.Phase() > 1.0f && envA.Phase() < 1.3f);
+  LocomotionEnvelope envB;
+  envB.SetPhase(3.0 * 3.14159265358979);
+  CHECK("SetPhase wraps into [0,2pi)", envB.Phase() >= 0.0f &&
+                                          envB.Phase() < 6.2832f);
+  envB.SetPhase(-0.5);
+  CHECK("SetPhase wraps negatives", envB.Phase() > 5.5f);
+  CHECK("walk/run/sprint/zipline align eligible",
+        IsPhaseAlignEligible(GaitWalk, false, false) &&
+            IsPhaseAlignEligible(GaitRun, false, false) &&
+            IsPhaseAlignEligible(GaitSprint, false, false) &&
+            IsPhaseAlignEligible(GaitZipline, false, false));
+  CHECK("idle not align eligible",
+        !IsPhaseAlignEligible(GaitIdle, false, false));
+  CHECK("to-idle not align eligible",
+        !IsPhaseAlignEligible(GaitWalk, true, false));
+  CHECK("jump-mapped run not align eligible",
+        !IsPhaseAlignEligible(GaitRun, false, true));
+  CHECK("2-cycle mapping: loop start is phase 0",
+        Near((float)PhaseFromNormalizedTime(0.0f, 2.0), 0.0f));
+  CHECK("2-cycle mapping: quarter loop is half cycle",
+        Near((float)PhaseFromNormalizedTime(0.25f, 2.0),
+             3.14159265358979f));
+  CHECK("2-cycle mapping: half loop wraps to full cycle",
+        Near((float)PhaseFromNormalizedTime(0.5f, 2.0), 0.0f));
+  CHECK("2-cycle mapping: three-quarter loop is half cycle",
+        Near((float)PhaseFromNormalizedTime(0.75f, 2.0),
+             3.14159265358979f));
+  CHECK("1-cycle mapping unchanged",
+        Near((float)PhaseFromNormalizedTime(0.5f, 1.0),
+             3.14159265358979f));
+  CHECK("phase offset 180 inverts",
+        Near((float)ApplyGaitPhaseOffset(0.0, 180.0f),
+             3.14159265358979f));
+  CHECK("phase offset 0 keeps mapping",
+        Near((float)ApplyGaitPhaseOffset(1.0, 0.0f), 1.0f));
+  CHECK("phase offset wraps within [0,2pi)",
+        ApplyGaitPhaseOffset(5.5, 90.0f) >= 0.0 &&
+            ApplyGaitPhaseOffset(5.5, 90.0f) < 6.2832);
+  CHECK("per-gait offset lookup defaults 0",
+        GaitPhaseOffsetDeg(CharacterProfile(), GaitWalk) == 0.0f);
+  CharacterProfile po;
+  po.run.phaseOffsetDeg = 180.0f;
+  po.sprint.phaseOffsetDeg = 90.0f;
+  CHECK("per-gait offset lookup run",
+        GaitPhaseOffsetDeg(po, GaitRun) == 180.0f);
+  CHECK("per-gait offset lookup sprint",
+        GaitPhaseOffsetDeg(po, GaitSprint) == 90.0f);
+  CHECK("per-gait offset lookup zipline default",
+        GaitPhaseOffsetDeg(po, GaitZipline) == 0.0f);
+  // loop stability (phase-tracking reference validity)
+  CHECK("run loop is loop stable",
+        ClassifyClipNameFull("A_actor_girl_run_loop").loopStable);
+  CHECK("walk loop is loop stable",
+        ClassifyClipNameFull("A_actor_lady_walk_loop").loopStable);
+  CHECK("zipline traversal is loop stable",
+        ClassifyClipNameFull("A_actor_lady_interact_zipline_sp_02").loopStable);
+  CHECK("start clip not loop stable",
+        !ClassifyClipNameFull("walk_start_l_0_r").loopStable);
+  CHECK("stop clip not loop stable",
+        !ClassifyClipNameFull("run_stop_r").loopStable);
+  CHECK("to clip not loop stable",
+        !ClassifyClipNameFull("run_to_walk_r").loopStable);
+  CHECK("jump clip not loop stable",
+        !ClassifyClipNameFull("idle_jump_start_l").loopStable);
+  CHECK("zipline start not loop stable",
+        !ClassifyClipNameFull("A_actor_lady_interact_zipline_start").loopStable);
+  CHECK("idle loop not loop stable",
+        !ClassifyClipNameFull("A_actor_girl_idle_loop").loopStable);
+  // PLL phase tracking
+  CHECK("wrap error shortest path forward",
+        Near((float)WrapPhaseError(0.2, 1.0), 0.8f));
+  CHECK("wrap error shortest path backward",
+        Near((float)WrapPhaseError(0.2, 5.9), -0.583185307179586f));
+  LocomotionEnvelope pll;
+  pll.SetPhaseTracking(true, 3.14159265358979);
+  for (int i = 0; i < 150; i++)
+    EnvAdvance(pll, 0.0f, 0.0f, 0.0f, false, 0.5f, 0.015f, 0.20f);
+  CHECK("PLL pulls toward ref without jump",
+        pll.Phase() > 0.8f && pll.Phase() < 3.2f);
+  CHECK("PLL stays in [0,2pi)", pll.Phase() >= 0.0f && pll.Phase() < 6.2832f);
+  for (int i = 0; i < 400; i++)
+    EnvAdvance(pll, 0.0f, 0.0f, 0.0f, false, 0.5f, 0.015f, 0.20f);
+  CHECK("PLL converges to ref", Near(pll.Phase(), 3.14159265358979f, 0.4f));
+  LocomotionEnvelope freeEnv;
+  freeEnv.SetPhaseTracking(false, 3.14159265358979);
+  CHECK("no tracking disables PLL", !freeEnv.PhaseTrackingActive());
+  EnvAdvance(freeEnv, 0.0f, 0.0f, 1.5f, false, 0.5f, 0.015f, 0.20f);  // prime
+  EnvAdvance(freeEnv, 0.0f, 0.0f, 1.5f, false, 0.5f, 0.015f, 0.20f);  // advance
+  // two frames can only integrate a few degrees; a wrongly-enabled snap
+  // would land the phase at the reference (pi) instead.
+  CHECK("no tracking = integration only, not pulled to ref",
+        fabsf((float)WrapPhaseError(freeEnv.Phase(), 3.14159265358979)) > 2.0f);
+  CHECK("verified stop tail active with energy off-gait",
+        ReleaseTailActive(true, false, 0.1f, 0.0f) &&
+            ReleaseTailActive(true, false, 0.0f, 0.02f));
+  CHECK("release tail inactive when settled or on locomotion",
+        !ReleaseTailActive(true, false, 0.0f, 0.0f) &&
+            !ReleaseTailActive(true, true, 0.1f, 0.1f));
+  CHECK("residual energy cannot start a tail without a verified stop",
+        !ReleaseTailActive(false, false, 0.1f, 0.1f));
+  // User-scale to-idle tau (0.3s): the decay must be GRADUAL (still most of
+  // the amplitude shortly after the stop) and must eventually settle below
+  // the tail epsilon — the engine keeps writing this bounded decay instead
+  // of truncating it mid-swing.
+  LocomotionEnvelope tail;
+  for (int i = 0; i < 300; i++)
+    EnvAdvance(tail, target, target, 1.7f, false, 0.15f, 0.3f, 0.20f);
+  for (int i = 0; i < 5; i++)
+    EnvAdvance(tail, 0.0f, 0.0f, 1.7f, true, 0.15f, 0.3f, 0.20f);
+  float earlyTail = tail.Amplitude();
+  for (int i = 0; i < 600; i++)
+    EnvAdvance(tail, 0.0f, 0.0f, 1.7f, true, 0.15f, 0.3f, 0.20f);
+  CHECK("slow to-idle tau decays gradually, no mid-swing snap",
+        earlyTail > target * 0.5f && tail.Amplitude() < kReleaseTailEpsRad);
+  // Rate-assisted PLL: with the oscillator free-running at a WRONG
+  // frequency while tracking a reference, the positional pull alone would
+  // hold error = rate mismatch x tau forever (the frequency smoothing
+  // regression).  The integral rate correction must absorb the mismatch.
+  LocomotionEnvelope pllRate;
+  pllRate.SetPhase(0.0);
+  pllRate.SetPhaseTracking(true, 0.0);  // static reference (rate 0)
+  for (int i = 0; i < 600; i++)
+    EnvAdvance(pllRate, 0.0f, 0.0f, 1.0f, false, 0.5f, 0.015f, 0.20f);
+  CHECK("PLL rate assist converges despite frequency mismatch",
+        fabs(WrapPhaseError(pllRate.Phase(), 0.0)) < 0.5);
+  CHECK("PLL rate correction pulls toward the reference rate",
+        pllRate.phaseCorrHz <= kPhaseCorrMaxHz && pllRate.phaseCorrHz < -0.5);
+  pllRate.SetPhaseTracking(false, 0.0);
+  CHECK("tracking disengage clears the rate correction",
+        pllRate.phaseCorrHz == 0.0);
   // GaitDownAmplitude fallback semantics (0 = symmetric = up); inlined here
   // because synthetic_motion.h pulls IL2CPP deps that verify cannot link.
   CharacterProfile p0;
@@ -443,6 +582,32 @@ static void TestConfigValidation() {
         !ParamBlockAccepted("{\"jump\":{\"mode\":3}}"));
   CHECK("native factor type mismatch rejected",
         !ParamBlockAccepted("{\"native_amplify\":{\"factor\":\"bad\"}}"));
+  // per-gait phase-align / auto-frequency / dev-threshold parsing
+  CHECK("phase_align bool accepted",
+        ParamBlockAccepted("{\"gait\":{\"run\":{\"phase_align\":false}}}"));
+  CHECK("phase_align type mismatch rejected",
+        !ParamBlockAccepted("{\"gait\":{\"run\":{\"phase_align\":1}}}"));
+  CHECK("auto_frequency bool accepted",
+        ParamBlockAccepted("{\"gait\":{\"run\":{\"auto_frequency\":false}}}"));
+  CHECK("auto_frequency type mismatch rejected",
+        !ParamBlockAccepted("{\"gait\":{\"run\":{\"auto_frequency\":\"yes\"}}}"));
+  CHECK("freq_dev_threshold number accepted",
+        ParamBlockAccepted("{\"gait\":{\"run\":{\"freq_dev_threshold\":0.1}}}"));
+  CHECK("freq_dev_threshold type mismatch rejected",
+        !ParamBlockAccepted("{\"gait\":{\"run\":{\"freq_dev_threshold\":\"5%\"}}}"));
+  {
+    jsonmini::Parser p;
+    p.p = "{\"gait\":{\"run\":{\"phase_align\":false,\"auto_frequency\":false,"
+          "\"freq_dev_threshold\":0.15}}}";
+    jsonmini::Value v;
+    CharacterProfile profile;
+    CHECK("new gait fields parsed into GaitParam",
+          p.ParseValue(v) && ParseParamBlock(v, profile) &&
+              !profile.run.phaseAlign && !profile.run.autoFrequency &&
+              Near(profile.run.freqDevThreshold, 0.15f) &&
+              profile.walk.phaseAlign && profile.walk.autoFrequency &&
+              Near(profile.walk.freqDevThreshold, 0.05f));
+  }
 
   ConfigSnapshot validSnapshot;
   CharacterProfile validProfile;
@@ -457,6 +622,17 @@ static void TestConfigValidation() {
   invalidSnapshot.characters["valid"].bones.leftName.clear();
   CHECK("final validator rejects one-sided bone pair",
         !ValidateSnapshot(invalidSnapshot));
+
+  ConfigSnapshot badThreshold = validSnapshot;
+  badThreshold.characters["valid"].run.freqDevThreshold = 1.5f;
+  CHECK("final validator rejects threshold >= 1",
+        !ValidateSnapshot(badThreshold));
+  badThreshold.characters["valid"].run.freqDevThreshold = -0.1f;
+  CHECK("final validator rejects threshold <= 0",
+        !ValidateSnapshot(badThreshold));
+  badThreshold.characters["valid"].run.freqDevThreshold = 0.05f;
+  CHECK("final validator accepts default threshold",
+        ValidateSnapshot(badThreshold));
 
   auto RuntimeConfigAccepted = [](const char *json) {
     jsonmini::Parser p;
@@ -1101,6 +1277,398 @@ static void TestJumpInertialSource() {
                   false).valid);
 }
 
+// ---------- auto-frequency alignment (freq_lock.h) ----------
+static void TestStopRelease() {
+  printf("[STOP-RELEASE]\n");
+  auto Sample = [](const char *name) {
+    StopReleaseSample sample;
+    sample.Observe(name, ClassifyClipNameFull(name), 1.0f);
+    return sample;
+  };
+  const auto run = Sample("A_actor_girl_run_loop");
+  const auto stop = Sample("A_actor_girl_run_stop_r");
+  const auto idle = Sample("A_actor_girl_idle_loop");
+  StopReleaseState state;
+  state.Observe(run);
+  state.Observe(idle);
+  CHECK("run straight to idle never arms a tail", !state.armed);
+  state.Observe(stop);
+  CHECK("accepted stop arms the decay", state.armed && !state.blocked);
+  state.Observe(idle);
+  CHECK("idle preserves an already armed stop decay",
+        state.armed && ReleaseTailActive(state.armed, false, 0.2f, 0.2f));
+  state.Observe(run);
+  CHECK("resumed locomotion ends the stop epoch", !state.armed);
+  state.Observe(Sample("A_actor_lady_run_to_idle"));
+  CHECK("accepted locomotion to-idle transition arms a tail", state.armed);
+
+  const char *interrupts[] = {
+      "battle_attack_01", "battle_skill_01", "combo_skill_air",
+      "A_actor_lady_attack_to_idle", "idle_jump_start_l",
+      "special_dash", "unrecognized_pose", "battle_attack_idle_loop"};
+  for (const char *clip : interrupts) {
+    state.Observe(run);
+    state.Observe(Sample(clip));
+    CHECK("direct unsupported transition never starts a tail", !state.armed);
+    state.Observe(stop);
+    state.Observe(idle);
+    state.Observe(Sample(clip));
+    CHECK(clip, !state.armed && state.blocked);
+    state.Observe(idle);
+    CHECK("idle cannot resurrect an interrupted stop decay", !state.armed);
+  }
+  StopReleaseSample blend = stop;
+  blend.Observe("battle_attack_01", ClassifyClipNameFull("battle_attack_01"), 0.2f);
+  state.Observe(blend);
+  CHECK("an attack blended with a stop cancels the stop", state.blocked && !state.armed);
+  state.Observe(stop);
+  CHECK("a lingering interrupted stop cannot re-arm the decay", !state.armed);
+  StopReleaseSample zeroWeight = stop;
+  zeroWeight.Observe("battle_skill_01", ClassifyClipNameFull("battle_skill_01"), 0.0f);
+  state.Observe(run);
+  state.Observe(zeroWeight);
+  CHECK("zero-weight clips do not cancel a visible stop", state.armed);
+  state.Observe(StopReleaseSample());
+  CHECK("empty clip samples cancel the stop", !state.armed);
+  state.Observe(stop);
+  state = StopReleaseState();
+  state.Observe(idle);
+  CHECK("character reset or hot reload cannot retain a stop epoch", !state.armed);
+}
+
+static void TestFreqLock() {
+  printf("[FREQ-LOCK]\n");
+  const char *clip = "run_loop";
+  GaitParam gp;  // defaults: freq 1.0, autoFrequency on, threshold 0.05
+  gp.frequencyHz = 2.0f;
+
+  // measurement + matching config: no correction at all
+  {
+    FreqLockState f;
+    FreqCache cache;
+    DWORD t = 1000;
+    float norm = 0.0f;
+    for (int i = 0; i < 20; i++) {  // phys 2.0 -> dNorm 0.05 per 50ms
+      FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+      norm += 0.05f;
+      if (norm >= 1.0f) norm -= 1.0f;  // also exercises the wrap path
+      t += 50;
+    }
+    CHECK("measurement converges to matching frequency",
+          f.measValid && Near(f.measHz, 2.0f, 0.1f));
+    CHECK("matching frequency never corrects",
+          !f.correcting && Near(f.useHz, 2.0f) && f.devCount == 0);
+    CHECK("no fit means no cache entry",
+          cache.Find("chr_test", GaitRun) == nullptr);
+  }
+
+  // sustained deviation (cfg 2.0 vs meas 2.2 = 9%) triggers correction,
+  // converges, then freezes below threshold/2 and persists the fit
+  {
+    FreqLockState f;
+    FreqCache cache;
+    DWORD t = 2000;
+    float norm = 0.0f;
+    bool sawCorrecting = false;
+    bool sawFreeze = false;
+    for (int i = 0; i < 40; i++) {  // phys 2.2 -> dNorm 0.055 per 50ms
+      FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+      norm += 0.055f;
+      if (norm >= 1.0f) norm -= 1.0f;
+      t += 50;
+      if (f.correcting) sawCorrecting = true;
+      if (sawCorrecting && !f.correcting) sawFreeze = true;
+    }
+    CHECK("sustained 9 percent deviation starts correcting", sawCorrecting);
+    CHECK("correction converges and freezes near measured",
+          sawFreeze && !f.correcting &&
+              fabsf(f.useHz - 2.2f) < 0.11f);
+    CHECK("corrected frequency differs from config",
+          fabsf(f.useHz - 2.0f) > 0.1f);
+    const float *cached = cache.Find("chr_test", GaitRun);
+    CHECK("fitted frequency persisted to cache",
+          cached != nullptr && fabsf(*cached - 2.2f) < 0.11f &&
+              fabsf(*cached - f.useHz) < 1e-4f);
+  }
+
+  // cached fit is reused across clip switches (same character + gait); no
+  // re-fit happens while the cached value matches the measurement
+  {
+    FreqCache cache;
+    {
+      FreqLockState f;
+      DWORD t = 2100;
+      float norm = 0.0f;
+      for (int i = 0; i < 40; i++) {
+        FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+        norm += 0.055f;
+        if (norm >= 1.0f) norm -= 1.0f;
+        t += 50;
+      }
+    }
+    const float cachedHz = *cache.Find("chr_test", GaitRun);
+    FreqLockState f2;
+    DWORD t2 = 2200;
+    float n2 = 0.0f;
+    FreqLockTick(f2, gp, "run_loop_b", 0.0f, t2, GaitRun, cache, "chr_test");
+    CHECK("clip switch reuses the cached frequency",
+          Near(f2.useHz, cachedHz, 1e-4f) && f2.useHz != gp.frequencyHz);
+    bool sawCorr = false;
+    for (int i = 0; i < 20; i++) {
+      FreqLockTick(f2, gp, "run_loop_b", n2, t2, GaitRun, cache, "chr_test");
+      n2 += 0.055f;
+      if (n2 >= 1.0f) n2 -= 1.0f;
+      t2 += 50;
+      if (f2.correcting) sawCorr = true;
+    }
+    CHECK("cached match requires no re-fit",
+          !sawCorr && Near(f2.useHz, cachedHz, 1e-3f));
+  }
+
+  // per-character isolation: another character starts from config and gets
+  // its own cache slot
+  {
+    FreqCache cache;
+    FreqLockState f;
+    DWORD t = 2300;
+    float norm = 0.0f;
+    FreqLockTick(f, gp, clip, 0.0f, t, GaitRun, cache, "chr_other");
+    CHECK("other character starts from config frequency",
+          Near(f.useHz, 2.0f));
+    for (int i = 0; i < 40; i++) {
+      FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_other");
+      norm += 0.055f;
+      if (norm >= 1.0f) norm -= 1.0f;
+      t += 50;
+    }
+    CHECK("per-character cache slots",
+          cache.Find("chr_test", GaitRun) == nullptr &&
+              cache.Find("chr_other", GaitRun) != nullptr);
+  }
+
+  // gait switch (different per-gait config frequencies) must NOT look like a
+  // user config edit: the cache survives and the fitted value is reused when
+  // returning to the gait
+  {
+    FreqCache cache;
+    {
+      FreqLockState f;
+      DWORD t = 2500;
+      float norm = 0.0f;
+      for (int i = 0; i < 40; i++) {
+        FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+        norm += 0.055f;
+        if (norm >= 1.0f) norm -= 1.0f;
+        t += 50;
+      }
+    }
+    const float cachedRun = *cache.Find("chr_test", GaitRun);
+    GaitParam gpWalk = gp;
+    gpWalk.frequencyHz = 1.5f;  // walk has its own per-gait config frequency
+    FreqLockState f;
+    DWORD t = 2600;
+    FreqLockTick(f, gpWalk, "walk_loop", 0.0f, t, GaitWalk, cache, "chr_test");
+    CHECK("gait switch keeps the run cache",
+          cache.Find("chr_test", GaitRun) != nullptr);
+    CHECK("gait without cache starts from its own config",
+          Near(f.useHz, 1.5f));
+    FreqLockTick(f, gp, "run_loop", 0.0f, t + 50, GaitRun, cache, "chr_test");
+    CHECK("returning to a gait reuses its cached fit",
+          Near(f.useHz, cachedRun, 1e-4f));
+    CHECK("no invalidation across gait switches",
+        cache.Find("chr_test", GaitRun) != nullptr &&
+            cache.Find("chr_test", GaitWalk) == nullptr);
+  }
+
+  // config frequency change invalidates the cached fit (user input wins)
+  {
+    FreqCache cache;
+    {
+      FreqLockState f;
+      DWORD t = 2400;
+      float norm = 0.0f;
+      for (int i = 0; i < 40; i++) {
+        FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+        norm += 0.055f;
+        if (norm >= 1.0f) norm -= 1.0f;
+        t += 50;
+      }
+    }
+    CHECK("cache populated before invalidation",
+          cache.Find("chr_test", GaitRun) != nullptr);
+    GaitParam gpNew = gp;
+    gpNew.frequencyHz = 2.6f;
+    FreqLockState f2;
+    DWORD t2 = 2450;
+    float n2 = 0.0f;
+    // establish the config baseline (2.0) on the old clip first
+    for (int i = 0; i < 6; i++) {
+      FreqLockTick(f2, gp, clip, n2, t2, GaitRun, cache, "chr_test");
+      n2 += 0.055f;
+      if (n2 >= 1.0f) n2 -= 1.0f;
+      t2 += 50;
+    }
+    // switch coincides with the config change: user input must win
+    FreqLockTick(f2, gpNew, "run_loop_c", n2, t2, GaitRun, cache, "chr_test");
+    CHECK("config change alongside clip switch invalidates the cache",
+          cache.Find("chr_test", GaitRun) == nullptr);
+    CHECK("config change restarts from the new config",
+          Near(f2.useHz, 2.6f));
+  }
+
+  // cache ring replacement: full cache keeps its cap and never overflows
+  {
+    FreqCache big;
+    for (int i = 0; i < 40; i++) {
+      char id[64];
+      snprintf(id, sizeof(id), "chr_%02d", i);
+      big.Put(id, GaitRun, 1.0f + i * 0.1f);
+    }
+    CHECK("cache caps at kFreqCacheMax", big.count == kFreqCacheMax);
+    big.Put("chr_99", GaitWalk, 2.0f);
+    big.Put("chr_98", GaitWalk, 2.1f);
+    CHECK("ring replacement keeps the cap", big.count == kFreqCacheMax);
+    CHECK("ring slot accepts new entries",
+          big.Find("chr_99", GaitWalk) != nullptr &&
+              big.Find("chr_98", GaitWalk) != nullptr);
+    // invalidate compacts and frees a slot
+    big.Invalidate("chr_00", GaitRun);
+    CHECK("invalidate removes exactly one entry",
+          big.count == kFreqCacheMax - 1 &&
+              big.Find("chr_00", GaitRun) == nullptr);
+  }
+
+  // Runtime resets on hot reload; the cache must validate its own config
+  // identity without relying on the discarded FreqLockState.cfgHz.
+  {
+    FreqCache cache;
+    cache.Put("chr_test", GaitRun, 2.2f, gp.frequencyHz);
+    cache.Put("chr_test", GaitWalk, 1.6f, 1.5f);
+    FreqLockState reset;
+    FreqLockTick(reset, gp, clip, 0.0f, 2900, GaitRun, cache, "chr_test");
+    CHECK("unchanged config reuses fit after runtime reset", Near(reset.useHz, 2.2f));
+    GaitParam changed = gp;
+    changed.frequencyHz = 3.0f;
+    reset = FreqLockState();
+    FreqLockTick(reset, changed, clip, 0.0f, 2950, GaitRun, cache, "chr_test");
+    CHECK("hot reload starts immediately from the changed config", Near(reset.useHz, 3.0f));
+    CHECK("hot reload invalidates only the stale gait fit",
+          !cache.Find("chr_test", GaitRun) && cache.Find("chr_test", GaitWalk));
+    changed.frequencyHz = 1.8f;
+    FreqLockTick(reset, changed, "walk_loop", 0.0f, 3000, GaitWalk, cache, "chr_test");
+    CHECK("config edit to inactive gait also invalidates its fit",
+          Near(reset.useHz, 1.8f) && !cache.Find("chr_test", GaitWalk));
+  }
+
+  // large threshold never triggers
+  {
+    FreqLockState f;
+    FreqCache cache;
+    GaitParam gpTh = gp;
+    gpTh.freqDevThreshold = 0.5f;  // 50%
+    DWORD t = 3000;
+    float norm = 0.0f;
+    for (int i = 0; i < 40; i++) {  // 9% deviation < 50% threshold
+      FreqLockTick(f, gpTh, clip, norm, t, GaitRun, cache, "chr_test");
+      norm += 0.055f;
+      if (norm >= 1.0f) norm -= 1.0f;
+      t += 50;
+    }
+    CHECK("deviation below a large threshold never corrects",
+          !f.correcting && Near(f.useHz, 2.0f));
+  }
+
+  // auto_frequency off: measurement runs but correction never engages
+  {
+    FreqLockState f;
+    FreqCache cache;
+    GaitParam gpOff = gp;
+    gpOff.autoFrequency = false;
+    DWORD t = 4000;
+    float norm = 0.0f;
+    for (int i = 0; i < 40; i++) {  // meas 2.2 vs cfg 2.0 = 9%
+      FreqLockTick(f, gpOff, clip, norm, t, GaitRun, cache, "chr_test");
+      norm += 0.055f;
+      if (norm >= 1.0f) norm -= 1.0f;
+      t += 50;
+    }
+    CHECK("auto frequency off never corrects",
+        !f.correcting && Near(f.useHz, 2.0f) && f.measValid);
+  }
+
+  // clip switch: measurement resets, then restarts on the new clip
+  {
+    FreqLockState f;
+    FreqCache cache;
+    DWORD t = 5000;
+    float norm = 0.0f;
+    for (int i = 0; i < 8; i++) {
+      FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+      norm += 0.055f;
+      if (norm >= 1.0f) norm -= 1.0f;
+      t += 50;
+    }
+    CHECK("clip A measured", f.measValid);
+    FreqLockTick(f, gp, "walk_loop", 0.0f, t, GaitRun, cache, "chr_test");
+    CHECK("clip switch resets measurement and correction",
+          !f.measValid && !f.correcting && Near(f.useHz, 2.0f));
+    FreqLockTick(f, gp, "walk_loop", 0.04f, t + 50, GaitRun, cache, "chr_test");
+    CHECK("re-arm sample has no delta yet", !f.measValid);
+    FreqLockTick(f, gp, "walk_loop", 0.08f, t + 100, GaitRun, cache, "chr_test");
+    CHECK("measurement restarts after switch", f.measValid);
+  }
+
+  // config frequency change (hot reload) restarts from the new config
+  {
+    FreqLockState f;
+    FreqCache cache;
+    DWORD t = 6000;
+    float norm = 0.0f;
+    for (int i = 0; i < 6; i++) {
+      FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+      norm += 0.05f;
+      if (norm >= 1.0f) norm -= 1.0f;
+      t += 50;
+    }
+    gp.frequencyHz = 2.4f;
+    FreqLockTick(f, gp, clip, norm, t, GaitRun, cache, "chr_test");
+    CHECK("config change resets useHz to the new config",
+          Near(f.useHz, 2.4f) && !f.correcting && f.devCount < kFreqDevSamples);
+    gp.frequencyHz = 2.0f;
+  }
+
+  // invalid / implausible samples never produce a measurement
+  {
+    FreqLockState f;
+    FreqCache cache;
+    FreqLockTick(f, gp, clip, -1.0f, 7000, GaitRun, cache, "chr_test");
+    FreqLockTick(f, gp, clip, -1.0f, 7050, GaitRun, cache, "chr_test");
+    CHECK("invalid normalizedTime skips measurement", !f.measValid);
+    FreqLockState f2;
+    FreqLockTick(f2, gp, clip, 0.0f, 7100, GaitRun, cache, "chr_test");
+    FreqLockTick(f2, gp, clip, 0.6f, 7150, GaitRun, cache, "chr_test");  // dNorm 0.6 > 0.5 rejected
+    CHECK("implausible delta rejected", !f2.measValid);
+  }
+
+  // per-gait switch helpers
+  CharacterProfile p;
+  CHECK("default phase align on", GaitPhaseAlignEnabled(p, GaitRun));
+  CHECK("default auto frequency on", GaitAutoFrequencyEnabled(p, GaitRun));
+  CHECK("default dev threshold 0.05",
+        Near(GaitFreqDevThreshold(p, GaitRun), 0.05f));
+  p.run.phaseAlign = false;
+  p.run.autoFrequency = false;
+  p.run.freqDevThreshold = 0.1f;
+  CHECK("per-gait overrides honored",
+        !GaitPhaseAlignEnabled(p, GaitRun) &&
+            !GaitAutoFrequencyEnabled(p, GaitRun) &&
+            Near(GaitFreqDevThreshold(p, GaitRun), 0.1f));
+  CHECK("other gaits keep defaults",
+        GaitPhaseAlignEnabled(p, GaitWalk) &&
+            GaitAutoFrequencyEnabled(p, GaitWalk) &&
+            Near(GaitFreqDevThreshold(p, GaitWalk), 0.05f));
+}
+
 // ---------- transform recorder diagnostics contract ----------
 static void TestTransformRecorderPolicy() {
   printf("[TRANSFORM RECORDER]\n");
@@ -1168,6 +1736,8 @@ int main() {
   TestDevCommandRevision();
   TestJumpPhaseAProbe();
   TestJumpInertialSource();
+  TestFreqLock();
+  TestStopRelease();
   TestTransformRecorderPolicy();
 
   printf("\n=== RESULT: %d passed, %d failed ===\n", g_pass, g_fail);

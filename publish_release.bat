@@ -9,6 +9,8 @@ setlocal
 set "VER=%~1"
 set "ROOT=%~dp0"
 set "DIST=%ROOT%dist"
+set "DOTNET=%ProgramFiles%\dotnet\dotnet.exe"
+if not exist "%DOTNET%" set "DOTNET=%LOCALAPPDATA%\Microsoft\dotnet\dotnet.exe"
 if "%VER%"=="" (
     rem auto-increment patch: read dist\last_version.txt, bump the 3rd digit
     for /f %%v in ('powershell -NoProfile -Command "$l=Get-Content '%DIST%\last_version.txt' -EA SilentlyContinue; if(-not $l){$l='v2.1.0'}; $m=[regex]::Match($l,'^v(\d+)\.(\d+)\.(\d+)'); if(-not $m.Success){'v2.1.0'} else { 'v{0}.{1}.{2}' -f $m.Groups[1].Value,$m.Groups[2].Value,([int]$m.Groups[3].Value+1) }"') do set "VER=%%v"
@@ -26,7 +28,7 @@ if errorlevel 1 ( echo [ERROR] verify.bat failed & exit /b 1 )
 echo [3/5] Publishing Manager (single build, self-contained win-x64) ...
 if exist "%DIST%\staging_app" rmdir /s /q "%DIST%\staging_app"
 mkdir "%DIST%\staging_app"
-"%LOCALAPPDATA%\Microsoft\dotnet\dotnet.exe" publish "%ROOT%Manager\SecondaryMotion.Manager.csproj" -c Release -r win-x64 --self-contained true -o "%DIST%\staging_app"
+"%DOTNET%" publish "%ROOT%Manager\SecondaryMotion.Manager.csproj" -c Release -r win-x64 --self-contained true -o "%DIST%\staging_app"
 if errorlevel 1 ( echo [ERROR] dotnet publish failed & exit /b 1 )
 
 echo [4/5] English package ...

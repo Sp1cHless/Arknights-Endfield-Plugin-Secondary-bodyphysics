@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v8.0": {
-      "SecondaryMotion.Manager/3.0.1": {
+      "SecondaryMotion.Manager/3.1.2": {
         "dependencies": {
           "WPF-UI": "3.0.5"
         },
@@ -25,7 +25,7 @@
     }
   },
   "libraries": {
-    "SecondaryMotion.Manager/3.0.1": {
+    "SecondaryMotion.Manager/3.1.2": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

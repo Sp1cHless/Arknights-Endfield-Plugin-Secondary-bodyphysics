@@ -113,7 +113,8 @@ public class PresetService {
             string[] gnames = { "idle", "walk", "run", "sprint", "zipline" };
             for (int g = 0; g < 5; g++)
                 sb.Append("        ")
-                  .Append(CharacterDatabaseService.GaitEntryJson(gnames[g], c.Amp[g], c.AmpDown[g], c.Freq[g]))
+                  .Append(CharacterDatabaseService.GaitEntryJson(gnames[g], c.Amp[g], c.AmpDown[g], c.Freq[g], c.PhaseOffset[g],
+                                                                 c.PhaseAlign[g], c.AutoFreq[g], c.FreqDevThreshold[g]))
                   .Append(g < 4 ? "," : "").Append("\r\n");
             sb.Append("      },\r\n");
             sb.Append("      \"envelope\": {\r\n")
