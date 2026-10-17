@@ -46,6 +46,7 @@ def analyze(path, output):
                           "down": float(row["down_env_deg"]),
                           "angle": float(row["synthetic_angle_deg"]),
                           "armed": row["stop_armed"], "blocked": row["stop_blocked"],
+                          "transition": row["transition_to_idle"],
                           "blocker": row["blocked_clip"],
                           "actual_step": distance(quat(row, "actualR"), quat(previous, "actualR"))})
         if row["target_valid"] != "1" or previous["target_valid"] != "1":
@@ -59,8 +60,9 @@ def analyze(path, output):
                              "target_step": distance(quat(row, "targetR"), quat(previous, "targetR"))})
     segments.append({"start": times[start], "end": times[-1], "clip": rows[start]["dominant_clip"]})
     report = {"source": str(path.resolve()), "frames": len(rows), "duration": times[-1],
-              "write_cutoffs": edges, "self_feedback_frames": len(feedback),
-              "largest_feedback_steps": sorted(feedback, key=lambda item: item["target_step"], reverse=True)[:12],
+              "write_cutoffs": edges, "readback_candidate_frames": len(feedback),
+              # Near-equal read-back poses are candidates, not proof of accumulation.
+              "largest_readback_steps": sorted(feedback, key=lambda item: item["target_step"], reverse=True)[:12],
               "clip_segments": segments,
               "stop_flags": dict(collections.Counter(
                   f"transition={r['transition_to_idle']},seen={r['stop_seen']},armed={r['stop_armed']},blocked={r['stop_blocked']},tail={r['release_tail']}"
