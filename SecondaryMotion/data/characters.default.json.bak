@@ -3,1044 +3,389 @@
   "characters": {
     "chr_0014_aurora": {
       "display_name": "Aurora",
-      "bones": {
-        "right": "R_breast_01_jnt",
-        "left": "L_breast_01_jnt",
-        "allow_fallback_candidates": true
-      },
-      "axis": {
-        "name": "Z",
-        "sign": 1
-      },
+      "bones": { "right": "R_breast_01_jnt", "left": "L_breast_01_jnt", "allow_fallback_candidates": true },
+      "axis": { "name": "Z", "sign": 1 },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0017_yvonne": {
       "display_name": "Yvonne",
-      "bones": {
-        "right": "breast_R_01_jnt",
-        "left": "breast_L_01_jnt",
-        "allow_fallback_candidates": true
-      },
-      "axis": {
-        "name": "Z",
-        "sign": 1
-      },
+      "bones": { "right": "breast_R_01_jnt", "left": "breast_L_01_jnt", "allow_fallback_candidates": true },
+      "axis": { "name": "Z", "sign": 1 },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0031_mifu": {
       "display_name": "Mifu",
-      "bones": {
-        "right": "R_breast_01_jnt",
-        "left": "L_breast_01_jnt",
-        "allow_fallback_candidates": true
-      },
-      "axis": {
-        "name": "Z",
-        "sign": 1
-      },
+      "bones": { "right": "R_breast_01_jnt", "left": "L_breast_01_jnt", "allow_fallback_candidates": true },
+      "axis": { "name": "Z", "sign": 1 },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0003_endminf": {
       "display_name": "Endminf",
-      "bones": {
-        "right": "",
-        "left": "",
-        "allow_fallback_candidates": true
-      },
-      "axis": {
-        "name": "Y",
-        "sign": 1
-      },
+      "bones": { "right": "", "left": "", "allow_fallback_candidates": true },
+      "axis": { "name": "Y", "sign": 1 },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0030_zhuangfy": {
       "display_name": "Zhuang Fangyi",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
-      "axis": {
-        "name": "Y",
-        "sign": 1
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
+      "axis": { "name": "Y", "sign": 1 },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0016_laevat": {
       "display_name": "Laevatain",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
-      "axis": {
-        "name": "Y",
-        "sign": 1
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
+      "axis": { "name": "Y", "sign": 1 },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0004_pelica": {
       "display_name": "Pelica",
-      "bones": {
-        "right": "",
-        "left": "",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "", "left": "", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0005_chen": {
       "display_name": "Chen",
-      "bones": {
-        "right": "",
-        "left": "",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "", "left": "", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0032_lizhiyan": {
       "display_name": "Lizhiyan",
-      "bones": {
-        "right": "R_breast_01_jnt",
-        "left": "L_breast_01_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "R_breast_01_jnt", "left": "L_breast_01_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 3.6,
-            "frequency_hz": 1.5
-          },
-          "run": {
-            "amplitude_deg": 8.5,
-            "frequency_hz": 1.7
-          },
-          "sprint": {
-            "amplitude_deg": 12,
-            "frequency_hz": 2
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 3.6, "frequency_hz": 1.5 },
+          "run": { "amplitude_deg": 8.5, "frequency_hz": 1.7 },
+          "sprint": { "amplitude_deg": 12, "frequency_hz": 2 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.15,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.02
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0035_liino": {
       "display_name": "Linuo",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0013_aglina": {
       "display_name": "Gilberta",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0026_lastrite": {
       "display_name": "Lastrite",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0009_azrila": {
       "display_name": "Azrila",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0012_avywen": {
       "display_name": "Avywenna",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0011_seraph": {
       "display_name": "Seraph",
-      "bones": {
-        "right": "breast_base_R_a_01_jnt_ctrl",
-        "left": "breast_base_L_a_01_jnt_ctrl",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "breast_base_R_a_01_jnt_ctrl", "left": "breast_base_L_a_01_jnt_ctrl", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0007_ikut": {
       "display_name": "ikut",
-      "bones": {
-        "right": "xiong_R_0_skin_jnt",
-        "left": "xiong_L_0_skin_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "xiong_R_0_skin_jnt", "left": "xiong_L_0_skin_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0021_whiten": {
       "display_name": "Atla",
-      "bones": {
-        "right": "breast_R_01_jnt",
-        "left": "breast_L_01_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "breast_R_01_jnt", "left": "breast_L_01_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0019_karin": {
       "display_name": "Akakuri",
-      "bones": {
-        "right": "breast_R_01_jnt",
-        "left": "breast_L_01_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "breast_R_01_jnt", "left": "breast_L_01_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
-        },
-        "native_amplify": {
-          "factor": 2
-        }
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
       }
     },
     "chr_0022_bounda": {
       "display_name": "Bounda",
-      "bones": {
-        "right": "breast_R_01_jnt",
-        "left": "breast_L_01_jnt",
-        "allow_fallback_candidates": true
-      },
+      "bones": { "right": "breast_R_01_jnt", "left": "breast_L_01_jnt", "allow_fallback_candidates": true },
       "defaults": {
         "gait": {
-          "idle": {
-            "amplitude_deg": 0,
-            "frequency_hz": 1.2
-          },
-          "walk": {
-            "amplitude_deg": 20,
-            "amplitude_down_deg": 20,
-            "frequency_hz": 1.7
-          },
-          "run": {
-            "amplitude_deg": 30,
-            "amplitude_down_deg": 35,
-            "frequency_hz": 2.7
-          },
-          "sprint": {
-            "amplitude_deg": 45,
-            "amplitude_down_deg": 45,
-            "frequency_hz": 3.4
-          }
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 }
         },
         "envelope": {
           "amplitude_attack_tau_sec": 0.5,
           "frequency_tau_sec": 0.2,
           "to_idle_release_tau_sec": 0.7
         },
-        "jump": {
-          "enabled": true,
-          "mode": "landing_damped",
-          "amplitude_deg": 23.333,
-          "damping_tau_sec": 0.35,
-          "frequency_hz": 3.0,
-          "max_duration_sec": 1.2,
-          "takeoff_delay_sec": 0.08,
-          "rising_target_deg": -23.333,
-          "apex_falling_target_deg": 23.333,
-          "acceleration_response": 0.1667,
-          "acceleration_filter_tau_sec": 0.08,
-          "natural_frequency_hz": 2.2,
-          "damping_ratio": 0.52,
-          "landing_impulse_gain": 6.667
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 23.333, "damping_tau_sec": 0.35, "frequency_hz": 3, "max_duration_sec": 1.2, "takeoff_delay_sec": 0.08, "rising_target_deg": -23.333, "apex_falling_target_deg": 23.333, "acceleration_response": 0.1667, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 2.2, "damping_ratio": 0.52, "landing_impulse_gain": 6.667 },
+        "native_amplify": { "factor": 2 }
+      }
+    },
+    "chr_0034_typhoea": {
+      "display_name": "Typhoeus",
+      "bones": { "right": "breast_base_R_a_01_jnt", "left": "breast_base_L_a_01_jnt", "allow_fallback_candidates": true },
+      "defaults": {
+        "gait": {
+          "idle": { "amplitude_deg": 0, "frequency_hz": 1.2 },
+          "walk": { "amplitude_deg": 20, "amplitude_down_deg": 20, "frequency_hz": 1.7 },
+          "run": { "amplitude_deg": 30, "amplitude_down_deg": 35, "frequency_hz": 2.7 },
+          "sprint": { "amplitude_deg": 45, "amplitude_down_deg": 45, "frequency_hz": 3.4 },
+          "zipline": { "amplitude_deg": 15, "amplitude_down_deg": 10, "frequency_hz": 3 }
         },
-        "native_amplify": {
-          "factor": 2
-        }
+        "envelope": {
+          "amplitude_attack_tau_sec": 0.5,
+          "frequency_tau_sec": 0.2,
+          "to_idle_release_tau_sec": 0.7
+        },
+        "jump": { "enabled": true, "mode": "landing_damped", "amplitude_deg": 40, "damping_tau_sec": 0.7, "frequency_hz": 2.5, "max_duration_sec": 4.4, "takeoff_delay_sec": 0.08, "rising_target_deg": -35, "apex_falling_target_deg": 30, "acceleration_response": 0.4, "acceleration_filter_tau_sec": 0.08, "natural_frequency_hz": 1.65, "damping_ratio": 0.52, "landing_impulse_gain": 60 },
+        "native_amplify": { "factor": 2 }
       }
     }
   }

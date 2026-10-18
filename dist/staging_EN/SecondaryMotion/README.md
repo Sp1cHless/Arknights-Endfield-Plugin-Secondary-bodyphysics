@@ -581,7 +581,7 @@ A technical character profile can contain:
 - special locomotion `animation_rules`
 - complete generic defaults for gait, envelope, Jump, and native amplification
 
-The current repository contains 20 official character profiles. This is a data count, not a runtime limit.
+The current repository contains 21 official character profiles, including Si (`chr_0036_jsspsi`). This is a data count, not a runtime limit. Updates add missing official profiles from the packaged templates while preserving existing user profiles.
 
 Character IDs remain stable internal keys. Display names may be localized, but localized names are never used as JSON keys or runtime identity.
 
@@ -736,7 +736,7 @@ The current verification suite covers, among other areas:
 - automatic Y/Z Jump direction
 - Manager UI/schema/serialization wiring
 
-The formal migration baseline passes **175 tests with 0 failures**, followed by a complete Runtime build and Manager build. This count describes the current repository state and is not a permanent version identifier.
+The Runtime regression suite passes **427 tests with 0 failures**. The release checks also run the Manager official-character migration tests, UI/serialization checks, and a complete Runtime build.
 
 ---
 
@@ -780,7 +780,7 @@ bilingual ResourceDictionary localization
 self-contained win-x64 publishing
 ```
 
-The current migration release baseline is Manager `3.0.0` and Runtime DLL resource version `2.4.0`.
+The current release version is `3.2.0` for both Manager and Runtime DLL metadata. `publish_release.bat` uses this project version for package names by default.
 
 ---
 
