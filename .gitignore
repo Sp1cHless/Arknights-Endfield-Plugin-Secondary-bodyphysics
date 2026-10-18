@@ -92,6 +92,8 @@ artifacts/
 
 *.tmp
 *.temp
+__pycache__/
+*.pyc
 *.bak
 *.old
 

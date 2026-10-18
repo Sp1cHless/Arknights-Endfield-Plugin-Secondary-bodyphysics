@@ -20,6 +20,11 @@ if %errorlevel% neq 0 (
     echo [VERIFY] UI/serialization checks FAILED
     exit /b 1
 )
+python -m unittest discover -s tests -p test_package_release.py
+if %errorlevel% neq 0 (
+    echo [VERIFY] ZIP packaging checks FAILED
+    exit /b 1
+)
 
 echo.
 echo === [2/5] Manager official character migration tests ===

@@ -52,7 +52,7 @@ del /q "%STAGE%\*.pdb" 2>nul
 del /q "%STAGE%\settings.json" 2>nul
 
 echo   Zipping %LANG% ...
-powershell -NoProfile -Command "Compress-Archive -Path '%STAGE%' -DestinationPath '%DIST%\ShakingBreastManager-%VER%-%LANG%-win-x64.zip' -Force"
+python "%ROOT%tools\package_release.py" "%STAGE%" "%DIST%\ShakingBreastManager-%VER%-%LANG%-win-x64.zip"
 if errorlevel 1 ( echo [ERROR] zip %LANG% failed & exit /b 1 )
 
 echo   Package: %DIST%\ShakingBreastManager-%VER%-%LANG%-win-x64.zip
